@@ -2,6 +2,7 @@ package com.example.app.controllers;
 
 import com.example.app.entities.RefreshToken;
 import com.example.app.entities.User;
+import com.example.app.exceptions.UserNotFoundException;
 import com.example.app.requests.RefreshTokenRequest;
 import com.example.app.requests.UserRequest;
 import com.example.app.responses.AuthenticationResponse;
@@ -38,50 +39,59 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public AuthenticationResponse login(@RequestBody UserRequest loginRequest){
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(),loginRequest.getPassword()); //useri authentication objesine koyucaz.
-        Authentication auth = authenticationManager.authenticate(authToken);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        String jwtToken = jwtTokenProvider.generateJWTToken(auth); //token oluşturmak için
-        User user = userService.getUserByUsername(loginRequest.getUsername());
-        AuthenticationResponse authenticationResponse = new AuthenticationResponse();
-        authenticationResponse.setAccessToken("Bearer " + jwtToken);
-        authenticationResponse.setRefreshToken(refreshTokenService.createRefreshToken(user));
-        authenticationResponse.setUserId(user.getId());
-        return authenticationResponse;
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
+        try {
+            Authentication auth = authenticationManager.authenticate(authToken);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            String jwtToken = jwtTokenProvider.generateJWTToken(auth);
+            User user = userService.getUserByUsername(loginRequest.getUsername());
+            AuthenticationResponse authenticationResponse = new AuthenticationResponse();
+            authenticationResponse.setMessage("Login Successful");
+            authenticationResponse.setAccessToken("Bearer " + jwtToken);
+            authenticationResponse.setRefreshToken(refreshTokenService.createRefreshToken(user));
+            authenticationResponse.setUserId(user.getId());
+            return authenticationResponse;
+        } catch (UserNotFoundException e) {
+            e.printStackTrace();
+            throw e; // or return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+
     }
-   // refresh token = access token geçerliliğini bitirdiğinde tokeni yenilemek için kullanılıcak
+
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody UserRequest registerRequest){       //ResponseEntity dönmemizin sebebi register olup olmadığının bilgisinin verilmesidir.
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody UserRequest registerRequest){
         AuthenticationResponse authenticationResponse = new AuthenticationResponse();
-        if(userService.getUserByUsername(registerRequest.getUsername()) != null){            //böyle bir user varsa db de.
+        if(userService.getUserByUsername(registerRequest.getUsername()) != null){
             authenticationResponse.setMessage("Username already taken.");
             return new ResponseEntity<>(authenticationResponse, HttpStatus.BAD_REQUEST);
         }
+
         User user = new User();
         user.setName(registerRequest.getUsername());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         userService.createUser(user);
-        //hem register olup daha sonra da login oluyoruz.
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(registerRequest.getUsername(),registerRequest.getPassword());
+
+        var authToken = new UsernamePasswordAuthenticationToken(registerRequest.getUsername(), registerRequest.getPassword());
         Authentication auth = authenticationManager.authenticate(authToken);
         SecurityContextHolder.getContext().setAuthentication(auth);
         String jwtToken = jwtTokenProvider.generateJWTToken(auth);
 
         authenticationResponse.setMessage("User Successfully Registered");
-        authenticationResponse.setAccessToken("Bearer "+jwtToken);
+        authenticationResponse.setAccessToken("Bearer " + jwtToken);
         authenticationResponse.setRefreshToken(refreshTokenService.createRefreshToken(user));
         authenticationResponse.setUserId(user.getId());
+
         return new ResponseEntity<>(authenticationResponse,HttpStatus.CREATED);
     }
 
-    @PostMapping("/refresh")   //userin elindeki tokenin expire olduğunda refresh atması gerekiyor onun için oluşturduk. Bu yüzden buraya istek geldiğinde yeni bir access token üreticez.
+    @PostMapping("/refresh")
     public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         AuthenticationResponse authResponse = new AuthenticationResponse();
         RefreshToken token = refreshTokenService.getByUser(refreshTokenRequest.getUserId());
         if(token.getToken().equals(refreshTokenRequest.getRefreshToken()) &&
                 !refreshTokenService.isRefreshExpired(token)) {
             User user = token.getUser();
-            String jwtToken = jwtTokenProvider.generateJwtTokenByUserId(user.getId());  //user in access tokenini güncellemiş oluyoruz.
+            String jwtToken = jwtTokenProvider.generateJwtTokenByUserId(user.getId());
             authResponse.setMessage("token successfully refreshed.");
             authResponse.setAccessToken("Bearer " + jwtToken);
             authResponse.setUserId(user.getId());

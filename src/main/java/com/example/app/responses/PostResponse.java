@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class PostResponse {  //bu classı kullanmamızın sebebi password gibi bilgileri dönmek istememiz. Sadece istediğimiz bilgileri döneriz.
+public class PostResponse {
     // {"id": 102,"userId": 1,"username": "ysk","text": "neden haberler","title": "haberlerim" }
 
     private Long id;

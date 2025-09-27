@@ -14,14 +14,16 @@ import java.util.Optional;
 
 @Service
 public class UserService {
-
     private UserRepository userRepository;
     private LikeRepository likeRepository;
     private CommentRepository commentRepository;
     private PostRepository postRepository;
 
 
-    public UserService(UserRepository userRepository, LikeRepository likeRepository, CommentRepository commentRepository, PostRepository postRepository) {
+    public UserService(UserRepository userRepository,
+                       LikeRepository likeRepository,
+                       CommentRepository commentRepository,
+                       PostRepository postRepository) {
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
@@ -51,8 +53,9 @@ public class UserService {
             foundUser.setImage(newUser.getImage());
             userRepository.save(foundUser);
             return foundUser;
-        }else
+        } else {
             return null;
+        }
     }
 
     public void deleteUserById(Long userId) {

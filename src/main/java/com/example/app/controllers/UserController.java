@@ -20,8 +20,11 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getAllUsers(){
-        return userService.getAllUsers();
+    public List<UserResponse> getAllUsers(){
+        var a = userService.getAllUsers();
+        return a.stream()
+                .map(UserResponse::new)   // calls new UserResponse(user) for each
+                .toList();
     }
 
     @PostMapping
@@ -30,7 +33,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public UserResponse getUserById(@PathVariable Long userId){  //custom exception yapıcaz bütün metodlarda yapmamız gerekir aslında. custom exception = mesela bir user kontrolünde user db de yoksa not found hatası dönmemiz gerekir
+    public UserResponse getUserById(@PathVariable Long userId){
         User user = userService.getUserById(userId);
         if(user==null){
             throw new UserNotFoundException();
@@ -56,7 +59,7 @@ public class UserController {
     /*@ResponseBody*/
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    private void handleUserNotFoundException(){ //bir UserNotFoundException handler bir (user bulunamadı hatasında bu metod çalışır) yazdık ne döneceğini filan yazdık. istersek bu handleUserNotFoundException fonksiyonun içine body de ekleyebiliriz.
+    private void handleUserNotFoundException(){
 
     }
 }

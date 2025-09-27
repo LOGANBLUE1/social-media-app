@@ -19,8 +19,8 @@ public class PostController {
         this.postService = postService;
     }
 
-    @GetMapping  // RequestParam =>  posts?userId=userId  requestin içerisindeki parametrelere (header) bakar
-    public List<PostResponse> getAllPosts(@RequestParam Optional<Long> userId) {            //requestparam url içindeki parametre içinden userId ye parse et demek.  (posts?userId={userId}) //parametre yoksa eğer o zaman bütün postları getirir.
+    @GetMapping  // RequestParam =>  posts?userId=userId
+    public List<PostResponse> getAllPosts(@RequestParam Optional<Long> userId) {
         return postService.getAllPosts(userId);
     }
 

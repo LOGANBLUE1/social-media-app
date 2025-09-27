@@ -1,5 +1,6 @@
 package com.example.app.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String name;
+    @JsonIgnore
     private String password;
     private int image;
 }

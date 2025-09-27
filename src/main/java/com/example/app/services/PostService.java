@@ -34,16 +34,16 @@ public class PostService {
         this.likeService = likeService;
     }
 
-    public List<PostResponse> getAllPosts(Optional<Long> userId) {                       //optionalın mantığı parametre oladabilir olmayadabilir, ikisine özelde çalışır.
+    public List<PostResponse> getAllPosts(Optional<Long> userId) {
         List<Post> postList;
-        if (userId.isPresent()) {                                                       //isPresent in mantığı eğer userId parametresi geldiyse
+        if (userId.isPresent()) {
             postList = postRepository.findByUserId(userId.get());
         }else{
-            postList = postRepository.findAll();                                         //eğer parametre userıd yoksa tüm postları çeker
+            postList = postRepository.findAll();
         }
         return postList.stream().map(post -> {
             List<LikeResponse> likes = likeService.getAllLikes(Optional.ofNullable(null),Optional.of(post.getId()));
-            return new PostResponse(post,likes);}).collect(Collectors.toList());       //postları teker teker PostResponse a mapledik.
+            return new PostResponse(post,likes);}).collect(Collectors.toList());
     }
     public Post getPostById(Long postId) {
         return postRepository.findById(postId).orElse(null);
@@ -51,11 +51,11 @@ public class PostService {
     public PostResponse getPostByIdWithLikes(Long postId) {
         Post post = postRepository.findById(postId).orElse(null);
         List<LikeResponse> likes = likeService.getAllLikes(Optional.ofNullable(null),Optional.of(postId));
-        return new PostResponse(post,likes);
+        return new PostResponse(post, likes);
     }
 
     public Post createPost(CreatePostRequest newPostRequest) {
-        User user = userService.getUserById(newPostRequest.getUserId());            //önce user var mı onu kontrol ederiz.
+        User user = userService.getUserById(newPostRequest.getUserId());
         if(user==null){
             return null;
         }
@@ -68,7 +68,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
-    public Post updatePostById(Long postId, UpdatePostRequest updatePostRequest) {  //bütün postu değiştirmicez ki sadece title ve text alanlarını değiştiricez bu yüzden requests in içine UpdatePostRequest oluşturduk.
+    public Post updatePostById(Long postId, UpdatePostRequest updatePostRequest) {
         Optional <Post> post = postRepository.findById(postId);
         if(post.isPresent()){
             Post updatePost = post.get();

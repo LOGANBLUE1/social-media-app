@@ -9,12 +9,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-@Component  //springin bean olarak inject edebilmesi için.
-public class JWTAuthenticationEntryPoint implements AuthenticationEntryPoint {      //eğer ki unauthorizated istek gelirse diye yazdığım bir entry point
+@Component
+public class JWTAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {  //eger bir hata yakalanırsa respondda unauthorized dönmesi için bu fonksiyon oluşturdum.
-
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED,authException.getMessage()); //response a erroru ekledik. 401 unauthorized
     }
 }

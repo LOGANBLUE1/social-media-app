@@ -2,7 +2,7 @@ package com.example.app.configuration;
 
 import com.example.app.security.JWTAuthenticationEntryPoint;
 import com.example.app.security.JWTAuthenticationFilter;
-import com.example.app.services.UserDetailsServiceImplementation;
+import com.example.app.services.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,13 +22,13 @@ import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfiguration {                                                                 //security package da oluşturduğumuz classların hepsinin otomatik şekilde oluşmasını sağlıcak bir configuration classı oluşturdum
+public class SecurityConfiguration {
 
-    private UserDetailsServiceImplementation userDetailsService;
+    private UserDetailsServiceImpl userDetailsService;
 
-    private JWTAuthenticationEntryPoint handler;                                                     //exception olduğunda handler eder
+    private JWTAuthenticationEntryPoint handler;
 
-    public SecurityConfiguration(UserDetailsServiceImplementation userDetailsService, JWTAuthenticationEntryPoint handler) {
+    public SecurityConfiguration(UserDetailsServiceImpl userDetailsService, JWTAuthenticationEntryPoint handler) {
         this.userDetailsService = userDetailsService;
         this.handler = handler;
     }
@@ -49,12 +49,12 @@ public class SecurityConfiguration {                                            
     }
 
     @Bean
-    public CorsFilter corsFilter() {  //cross originden gelen istekleri filtreleme yapıyoruz.
+    public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("*");  //herşeye izin veriyoruz şimdilik.
-        config.addAllowedHeader("*");   //herşeye izin veriyoruz şimdilik.
+        config.addAllowedOrigin("*");
+        config.addAllowedHeader("*");
         config.addAllowedMethod("OPTIONS");
         config.addAllowedMethod("HEAD");
         config.addAllowedMethod("GET");
@@ -69,16 +69,17 @@ public class SecurityConfiguration {                                            
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .cors()   //cors ekledik. Yukarıda yazdığımız CorsFilter beanini kullanır.
+                .cors()
                 .and()
-                .csrf().disable()   //postmanden de istek atacağımız için disable ettik.
-                .exceptionHandling().authenticationEntryPoint(handler).and()  //exception olduğunda bizim yazdığımız  authenticationEntryPoint i kullanıcak.
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()       //stateless session oluşturduk.
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(handler)
+                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
                 .authorizeHttpRequests()
-                .requestMatchers("/auth/**").permitAll() //auth ile ilgili istek geldiğinde izin ver. token isteme yani.
-                .requestMatchers(HttpMethod.GET,"/posts").permitAll() //posts ile gelen api isteklerine sadece get olunca izin ver diyoruz.
-                .requestMatchers(HttpMethod.GET,"/comments").permitAll()
-                .anyRequest().authenticated(); //bunlar dışında istek gelirse authenticated mı diye kontrol et.
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET,"/posts").permitAll()
+                .anyRequest().authenticated();
 
         httpSecurity.addFilterBefore(JWTAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); //bizim yaptıgımız jwtAuthenticationFilter da ekle UsernamePasswordAuthenticationFilter dan önce.
         return httpSecurity.build();
