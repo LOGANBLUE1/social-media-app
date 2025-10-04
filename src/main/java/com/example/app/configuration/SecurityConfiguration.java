@@ -19,14 +19,14 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    private UserDetailsServiceImpl userDetailsService;
-
-    private JWTAuthenticationEntryPoint handler;
+    private final UserDetailsServiceImpl userDetailsService;
+    private final JWTAuthenticationEntryPoint handler;
 
     public SecurityConfiguration(UserDetailsServiceImpl userDetailsService, JWTAuthenticationEntryPoint handler) {
         this.userDetailsService = userDetailsService;
@@ -34,7 +34,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public JWTAuthenticationFilter JWTAuthenticationFilter() {
+    public JWTAuthenticationFilter jwtAuthenticationFilter() {
         return new JWTAuthenticationFilter();
     }
 
@@ -53,36 +53,31 @@ public class SecurityConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("*");
+        config.setAllowedOriginPatterns(List.of("*")); // allow all origins
         config.addAllowedHeader("*");
-        config.addAllowedMethod("OPTIONS");
-        config.addAllowedMethod("HEAD");
-        config.addAllowedMethod("GET");
-        config.addAllowedMethod("PUT");
-        config.addAllowedMethod("POST");
-        config.addAllowedMethod("DELETE");
-        config.addAllowedMethod("PATCH");
+        config.addAllowedMethod("*"); // allow all HTTP methods
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity
-                .cors()
-                .and()
-                .csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(handler)
-                .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeHttpRequests()
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET,"/posts").permitAll()
-                .anyRequest().authenticated();
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors() // use above CorsFilter
+            .and()
+            .csrf().disable()
+            .exceptionHandling().authenticationEntryPoint(handler)
+            .and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .authorizeHttpRequests()
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // allow preflight
+            .requestMatchers("/**").permitAll()         // login/register endpoints
+//            .requestMatchers("/auth/**").permitAll()
+            .anyRequest().authenticated();
 
-        httpSecurity.addFilterBefore(JWTAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); //bizim yaptıgımız jwtAuthenticationFilter da ekle UsernamePasswordAuthenticationFilter dan önce.
-        return httpSecurity.build();
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
-
 }

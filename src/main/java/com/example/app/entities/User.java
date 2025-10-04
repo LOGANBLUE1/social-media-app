@@ -13,8 +13,8 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    private String username;
     @JsonIgnore
     private String password;
-    private int image;
+    private String image;
 }

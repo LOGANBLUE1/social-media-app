@@ -23,7 +23,8 @@ public class Post {
 
     private String title;
 
-    @Lob
+    // TODO: Change to @Lob later
+//    @Lob
     @Column(columnDefinition = "text")
     private String text;
 

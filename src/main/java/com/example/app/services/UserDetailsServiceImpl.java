@@ -10,9 +10,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService { //UserDetails için service oluşturduk.
+public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public UserDetailsServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -20,11 +20,11 @@ public class UserDetailsServiceImpl implements UserDetailsService { //UserDetail
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByName(username);
-        return JWTUserDetails.create(user);  //gelen user' i UserDetails olarak döner.
+        User user = userRepository.findByUsername(username);
+        return JWTUserDetails.create(user);
     }
 
-    public UserDetails loadUserById(Long id) {  //lazım olursa diye yazdım.
+    public UserDetails loadUserById(Long id) {
         User user = userRepository.findById(id).get();
         return JWTUserDetails.create(user);
     }

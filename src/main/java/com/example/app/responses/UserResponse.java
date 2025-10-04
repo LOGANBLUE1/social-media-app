@@ -7,12 +7,12 @@ import lombok.Data;
 @Data
 public class UserResponse {
     private Long id;
-    private int imageId;
     private String username;
+    private String imageId;
 
     public UserResponse(User user) {
         this.id = user.getId();
         this.imageId = user.getImage();
-        this.username = user.getName();
+        this.username = user.getUsername();
     }
 }

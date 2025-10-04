@@ -7,4 +7,5 @@ import lombok.Data;
 public class UserRequest {
     String username;
     String password;
+    String image;
 }

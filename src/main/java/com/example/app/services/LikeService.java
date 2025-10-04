@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class LikeService {
-    private LikeRepository likeRepository;
-    private UserService userService;
-    private PostService postService;
+    private final LikeRepository likeRepository;
+    private final UserService userService;
+    private final PostService postService;
 
     public LikeService(LikeRepository likeRepository, UserService userService, PostService postService) {
         this.likeRepository = likeRepository;
@@ -46,7 +46,6 @@ public class LikeService {
         Post post = postService.getPostById(CreateLikeRequest.getPostId());
         if(user != null && post != null) {
             Like like = new Like();
-            like.setId(CreateLikeRequest.getId());
             like.setPost(post);
             like.setUser(user);
             return likeRepository.save(like);

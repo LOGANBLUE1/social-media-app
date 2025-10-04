@@ -14,7 +14,7 @@ import java.util.Optional;
 @RequestMapping("/likes")
 public class LikeController {
 
-    private LikeService likeService;
+    private final LikeService likeService;
 
     public LikeController(LikeService likeService) {
         this.likeService = likeService;

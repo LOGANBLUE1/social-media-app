@@ -6,15 +6,19 @@ Content-Type: application/json
   "password": "123"
 }
 
-### request
-POST http://localhost:8080/auth/refresh
-Content-Type: application/json
+//### request
+//POST http://localhost:8080/auth/refresh
+//Content-Type: application/json
+//
+//{
+//  "userId": 5,
+//  "refreshToken": "6959316e-f17a-432a-8760-114c30c8f729"
+//}
+//
+//### request
+//GET http://localhost:8080/users
+//Accept: application/json
 
-{
-  "userId": 5,
-  "refreshToken": "6959316e-f17a-432a-8760-114c30c8f729"
-}
-
 ### request
-GET http://localhost:8080/users
+DELETE http://localhost:8080/comments/1
 Accept: application/json

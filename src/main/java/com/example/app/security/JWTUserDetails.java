@@ -33,7 +33,7 @@ public class JWTUserDetails implements UserDetails {
     public static JWTUserDetails create(User user) {                                    //bize bir user geldiğinde UserDetails objecti donuyoruz.
         List<GrantedAuthority> authoritiesList = new ArrayList<>();
         authoritiesList.add(new SimpleGrantedAuthority("user"));                   //bizde admin yok tek kullanıcı vardır.
-        return new JWTUserDetails(user.getId(),user.getName(), user.getPassword(), authoritiesList);
+        return new JWTUserDetails(user.getId(),user.getUsername(), user.getPassword(), authoritiesList);
     }
 
     @Override

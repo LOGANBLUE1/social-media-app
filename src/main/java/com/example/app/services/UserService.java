@@ -5,19 +5,22 @@ import com.example.app.dataAccess.CommentRepository;
 import com.example.app.dataAccess.LikeRepository;
 import com.example.app.dataAccess.PostRepository;
 import com.example.app.dataAccess.UserRepository;
+import com.example.app.dto.UserCommentProjection;
+import com.example.app.dto.UserLikeProjection;
 import com.example.app.entities.User;
+import com.example.app.requests.UserRequest;
+import com.example.app.responses.UserActivityResponse;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserService {
-    private UserRepository userRepository;
-    private LikeRepository likeRepository;
-    private CommentRepository commentRepository;
-    private PostRepository postRepository;
+    private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
 
 
     public UserService(UserRepository userRepository,
@@ -40,15 +43,14 @@ public class UserService {
     }
 
     public User getUserById(Long userId) {
-        //user db de olmayabilir kontrol etmek lazım
         return userRepository.findById(userId).orElse(null);
     }
 
-    public User updateUserById(Long userId, User newUser) {
+    public User updateUserById(Long userId, UserRequest newUser) {
         Optional<User> user = userRepository.findById(userId);
         if (user.isPresent()){  //user var mi
             User foundUser = user.get();
-            foundUser.setName(newUser.getName());
+            foundUser.setUsername(newUser.getUsername());
             foundUser.setPassword(newUser.getPassword());
             foundUser.setImage(newUser.getImage());
             userRepository.save(foundUser);
@@ -63,19 +65,19 @@ public class UserService {
     }
 
     public User getUserByUsername(String username) {
-        return userRepository.findByName(username);
+        return userRepository.findByUsername(username);
     }
 
-    public List<Object> getUserActivityById(Long userId) {
-        List<Long> postIds = postRepository.findTopByUserId(userId);
+    public UserActivityResponse getUserActivityById(Long userId) {
+        List<Long> postIds = postRepository.findTop5ByUserId(userId);
         if(postIds.isEmpty()) {
             return null;
         }
-        List<Object> comments = commentRepository.findUserCommentsByPostId(postIds);
-        List<Object> likes = likeRepository.findUserLikesByPostId(postIds);
-        List<Object> results = new ArrayList<>();
-        results.addAll(comments);
-        results.addAll(likes);
-        return results;
+        var response = new UserActivityResponse();
+        List<UserCommentProjection> comments = commentRepository.findUserCommentsByPostId(postIds);
+        List<UserLikeProjection> likes = likeRepository.findUserLikesByPostId(postIds);
+        response.setComments(comments);
+        response.setLikes(likes);
+        return response;
     }
 }
