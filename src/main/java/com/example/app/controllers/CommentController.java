@@ -27,8 +27,8 @@ public class CommentController {
     }
 
     @GetMapping
-    public List<CommentResponse> getAllComments(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
-        return commentService.getAllComments(userId, postId);
+    public ResponseEntity<?> getAllComments(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
+        return ApiResponse.success(commentService.getAllComments(userId, postId));
     }
 
     @PostMapping
@@ -41,37 +41,30 @@ public class CommentController {
         return ApiResponse.build(HttpStatus.CREATED, "success", res);
     }
 
-    @GetMapping("/{commentId}")
-    public ResponseEntity<?> getCommentById(@PathVariable Long commentId){
-        if(commentId == null){
-            return ApiResponse.build(HttpStatus.BAD_REQUEST, "commentId is required", null);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCommentById(@PathVariable Long id){
+        if(id == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "id is required", null);
         }
-        var res = commentService.getCommentById(commentId);
-        if(res==null){
-            return ApiResponse.build(HttpStatus.NOT_FOUND, "Comment not found", null);
-        }
+        var res = commentService.getCommentByIdOrThrow(id);
         return ApiResponse.success(res);
     }
 
-    @PutMapping("/{commentId}")
-    public ResponseEntity<?> updateCommentById(@PathVariable Long commentId, @RequestBody UpdateCommentRequest updateCommentRequest){
-        if(commentId == null){
-            return ApiResponse.build(HttpStatus.BAD_REQUEST, "commentId is required", null);
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCommentById(@PathVariable Long id, @RequestBody UpdateCommentRequest updateCommentRequest){
+        if(id == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "id is required", null);
         }
-        var res = commentService.updateCommentById(commentId, updateCommentRequest);
-        if(res==null){
-            return ApiResponse.build(HttpStatus.NOT_FOUND, "Comment not found", null);
-        }
+        var res = commentService.updateCommentById(id, updateCommentRequest);
         return ApiResponse.success(res);
     }
 
-    @DeleteMapping("/{commentId}")
-    public ResponseEntity<?> deleteCommentById(@PathVariable Long commentId){
-        System.out.println("Deleting comment with ID: " + commentId);
-        if(commentId == null){
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteCommentById(@PathVariable Long id){
+        if(id == null){
             return ApiResponse.build(HttpStatus.BAD_REQUEST, "commentId is required", null);
         }
-        commentService.deleteCommentById(commentId);
-        return ApiResponse.build(HttpStatus.NO_CONTENT, null, null);
+        commentService.deleteCommentById(id);
+        return ApiResponse.deleted();
     }
 }

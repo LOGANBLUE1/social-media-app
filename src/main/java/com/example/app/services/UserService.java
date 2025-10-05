@@ -8,12 +8,12 @@ import com.example.app.dataAccess.UserRepository;
 import com.example.app.dto.UserCommentProjection;
 import com.example.app.dto.UserLikeProjection;
 import com.example.app.entities.User;
+import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.UserRequest;
 import com.example.app.responses.UserActivityResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -42,22 +42,19 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User getUserById(Long userId) {
-        return userRepository.findById(userId).orElse(null);
+    public User getUserByIdOrThrow(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     public User updateUserById(Long userId, UserRequest newUser) {
-        Optional<User> user = userRepository.findById(userId);
-        if (user.isPresent()){  //user var mi
-            User foundUser = user.get();
-            foundUser.setUsername(newUser.getUsername());
-            foundUser.setPassword(newUser.getPassword());
-            foundUser.setImage(newUser.getImage());
-            userRepository.save(foundUser);
-            return foundUser;
-        } else {
-            return null;
-        }
+        User user = getUserByIdOrThrow(userId);
+
+        user.setUsername(newUser.getUsername());
+        user.setPassword(newUser.getPassword());
+        user.setImage(newUser.getImage());
+        userRepository.save(user);
+        return user;
     }
 
     public void deleteUserById(Long userId) {

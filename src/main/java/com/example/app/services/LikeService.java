@@ -4,6 +4,7 @@ import com.example.app.dataAccess.LikeRepository;
 import com.example.app.entities.Like;
 import com.example.app.entities.Post;
 import com.example.app.entities.User;
+import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.CreateLikeRequest;
 import com.example.app.responses.LikeResponse;
 import org.springframework.stereotype.Service;
@@ -34,16 +35,17 @@ public class LikeService {
             list = likeRepository.findByPostId(postId.get());
         }else
             list = likeRepository.findAll();
-        return list.stream().map(like -> new LikeResponse(like)).collect(Collectors.toList());  //Like' ları alıp LikeResponse' a mapledik.
+        return list.stream().map(LikeResponse::new).collect(Collectors.toList());
     }
 
     public Like getLikeById(Long LikeId) {
-        return likeRepository.findById(LikeId).orElse(null);
+        return likeRepository.findById(LikeId)
+                .orElseThrow(() -> new NotFoundException("Like not found"));
     }
 
     public Like createLike(CreateLikeRequest CreateLikeRequest) {
-        User user = userService.getUserById(CreateLikeRequest.getUserId());
-        Post post = postService.getPostById(CreateLikeRequest.getPostId());
+        User user = userService.getUserByIdOrThrow(CreateLikeRequest.getUserId());
+        Post post = postService.getPostByIdOrThrow(CreateLikeRequest.getPostId());
         if(user != null && post != null) {
             Like like = new Like();
             like.setPost(post);

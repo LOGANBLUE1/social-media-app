@@ -28,7 +28,7 @@ public class Comment {
     @OnDelete(action = OnDeleteAction.CASCADE)  // If the user is deleted, also delete the comment.
     private User user;
 
-    @Lob
+//    @Lob
     @Column(columnDefinition = "text")
     private String text;
 

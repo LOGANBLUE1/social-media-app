@@ -24,30 +24,37 @@ public class PostController {
 
     @GetMapping  // RequestParam =>  posts?userId=userId
     public ResponseEntity<?> getAllPosts(@RequestParam Optional<Long> userId) {
-        return ApiResponse.build(HttpStatus.OK, "Successful", postService.getAllPosts(userId));
+        return ApiResponse.success(postService.getAllPosts(userId));
     }
 
     @PostMapping
-    public Post createPost(@RequestBody CreatePostRequest newPostRequest) {
-        System.out.println("Creating post with data: " + newPostRequest);
-        return postService.createPost(newPostRequest);
+    public ResponseEntity<?> createPost(@RequestBody CreatePostRequest newPostRequest) {
+        return ApiResponse.created(postService.createPost(newPostRequest));
     }
 
 
-    @GetMapping("/{postId}")
-    public PostResponse getPostById(@PathVariable Long postId) {
-//        return postService.getPostById(postId);
-        return postService.getPostByIdWithLikes(postId);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPostById(@PathVariable Long id) {
+        if(id == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "postId is required", null);
+        }
+        return ApiResponse.success(postService.getPostByIdWithLikes(id));
     }
 
-    @PutMapping("/{postId}")
-    public Post updatePostById(@PathVariable Long postId, @RequestBody UpdatePostRequest updatePostRequest){
-        return postService.updatePostById(postId, updatePostRequest);
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePostById(@PathVariable Long id, @RequestBody UpdatePostRequest updatePostRequest){
+        if(id == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "postId is required", null);
+        }
+        return ApiResponse.success(postService.updatePostById(id, updatePostRequest));
     }
 
-    @DeleteMapping("/{postId}")
-    public void deletePostById(@PathVariable Long postId){
-        postService.deletePostById(postId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePostById(@PathVariable Long id){
+        if(id == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "postId is required", null);
+        }
+        postService.deletePostById(id);
+        return ApiResponse.deleted();
     }
-
 }

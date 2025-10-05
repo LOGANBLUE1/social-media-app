@@ -22,8 +22,12 @@ public class RefreshTokenService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
+    public RefreshToken getByUser(Long userId) {
+        return refreshTokenRepository.findByUserId(userId);
+    }
+
     public String createRefreshToken(User user) {
-        RefreshToken token = refreshTokenRepository.findByUserId(user.getId());
+        RefreshToken token = this.getByUser(user.getId());
         if(token == null) {
             token =	new RefreshToken();
             token.setUser(user);
@@ -34,9 +38,6 @@ public class RefreshTokenService {
         return token.getToken();
     }
 
-    public RefreshToken getByUser(Long userId) {
-        return refreshTokenRepository.findByUserId(userId);
-    }
 
     public boolean isRefreshExpired(RefreshToken token) {
         return token.getExpiryDate().isBefore(LocalDateTime.now());

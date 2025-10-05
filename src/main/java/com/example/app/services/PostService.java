@@ -1,9 +1,9 @@
 package com.example.app.services;
 
 import com.example.app.dataAccess.PostRepository;
-import com.example.app.entities.Like;
 import com.example.app.entities.Post;
 import com.example.app.entities.User;
+import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.CreatePostRequest;
 import com.example.app.requests.UpdatePostRequest;
 import com.example.app.responses.LikeResponse;
@@ -14,9 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -49,44 +47,33 @@ public class PostService {
                 .toList();
     }
 
-    public Post getPostById(Long postId) {
-        System.out.println("PostService - getPostById called with postId: " + postId);
-        return postRepository.findById(postId).orElse(null);
+    public Post getPostByIdOrThrow(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException("Post not found"));
     }
 
     public PostResponse getPostByIdWithLikes(Long postId) {
-        Post post = postRepository.findById(postId).orElse(null);
+        Post post = getPostByIdOrThrow(postId);
         List<LikeResponse> likes = likeService.getAllLikes(Optional.empty(), Optional.of(postId));
-        if (post != null) {
-            return new PostResponse(post, likes);
-        } else {
-            return null;
-        }
+        return new PostResponse(post, likes);
     }
 
     public Post createPost(CreatePostRequest newPostRequest) {
-        User user = userService.getUserById(newPostRequest.getUserId());
-        if(user != null) {
-            Post post = new Post();
-            post.setText(newPostRequest.getText());
-            post.setTitle(newPostRequest.getTitle());
-            post.setUser(user);
-            post.setCreateDate(LocalDateTime.now());
-            return postRepository.save(post);
-        } else {
-            return null;
-        }
+        User user = userService.getUserByIdOrThrow(newPostRequest.getUserId());
+        Post post = new Post();
+        post.setText(newPostRequest.getText());
+        post.setTitle(newPostRequest.getTitle());
+        post.setUser(user);
+        post.setCreateDate(LocalDateTime.now());
+        return postRepository.save(post);
     }
 
     public Post updatePostById(Long postId, UpdatePostRequest updatePostRequest) {
-        Post post = postRepository.findById(postId).orElse(null);
-        if(post != null) {
-            post.setText(updatePostRequest.getText());
-            post.setTitle(updatePostRequest.getTitle());
-            postRepository.save(post);
-            return post;
-        }
-        return null;
+        Post post = getPostByIdOrThrow(postId);
+        post.setText(updatePostRequest.getText());
+        post.setTitle(updatePostRequest.getTitle());
+        postRepository.save(post);
+        return post;
     }
 
     public void deletePostById(Long postId) {

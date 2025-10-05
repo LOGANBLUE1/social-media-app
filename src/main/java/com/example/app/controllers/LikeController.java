@@ -5,6 +5,9 @@ import com.example.app.entities.Like;
 import com.example.app.requests.CreateLikeRequest;
 import com.example.app.responses.LikeResponse;
 import com.example.app.services.LikeService;
+import com.example.app.utils.ApiResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,22 +24,29 @@ public class LikeController {
     }
 
     @GetMapping
-    public List<LikeResponse> getAllLikes(@RequestParam Optional<Long> userId,@RequestParam Optional<Long> postId) {
-        return likeService.getAllLikes(userId, postId);
+    public ResponseEntity<?> getAllLikes(@RequestParam Optional<Long> userId,@RequestParam Optional<Long> postId) {
+        return ApiResponse.success(likeService.getAllLikes(userId, postId));
     }
 
     @PostMapping
-    public Like createLike(@RequestBody CreateLikeRequest createLikeRequest) {
-        return likeService.createLike(createLikeRequest);
+    public ResponseEntity<?> createLike(@RequestBody CreateLikeRequest createLikeRequest) {
+        return ApiResponse.created(likeService.createLike(createLikeRequest));
     }
 
-    @GetMapping("/{likeId}")
-    public Like getLikeById(@PathVariable Long likeId) {
-        return likeService.getLikeById(likeId);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getLikeById(@PathVariable Long id) {
+        if(id == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "likeId is required", null);
+        }
+        return ApiResponse.success(likeService.getLikeById(id));
     }
 
-    @DeleteMapping("/{likeId}")
-    public void deleteLikeById(@PathVariable Long likeId) {
-        likeService.deleteLikeById(likeId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteLikeById(@PathVariable Long id) {
+        if(id == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "likeId is required", null);
+        }
+        likeService.deleteLikeById(id);
+        return ApiResponse.deleted();
     }
 }

@@ -1,7 +1,7 @@
 package com.example.app.controllers;
 
 import com.example.app.entities.User;
-import com.example.app.exceptions.UserNotFoundException;
+import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.UserRequest;
 import com.example.app.responses.UserResponse;
 import com.example.app.security.JWTUserDetails;
@@ -10,7 +10,6 @@ import com.example.app.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,18 +26,16 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserResponse> getAllUsers(){
+    public ResponseEntity<?> getAllUsers(){
         var a = userService.getAllUsers();
-        return a.stream()
+        var list =  a.stream()
                 .map(UserResponse::new)   // calls new UserResponse(user) for each
                 .toList();
+        return ApiResponse.success(list);
     }
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal JWTUserDetails usr){
-        User user = userService.getUserById(usr.getId());
-        if(user==null){
-            throw new UserNotFoundException();
-        }
+        User user = userService.getUserByIdOrThrow(usr.getId());
         return ApiResponse.success(new UserResponse(user));
     }
 
@@ -46,7 +43,7 @@ public class UserController {
     public ResponseEntity<?> updateCurrentUser(@AuthenticationPrincipal JWTUserDetails user, @RequestBody UserRequest newUser){
         User updatedUser = userService.updateUserById(user.getId(), newUser);
         if(updatedUser==null){
-            throw new UserNotFoundException();
+            throw new NotFoundException();
         }
         return ApiResponse.success(new UserResponse(updatedUser));
     }

@@ -5,6 +5,7 @@ import com.example.app.dataAccess.CommentRepository;
 import com.example.app.entities.Comment;
 import com.example.app.entities.Post;
 import com.example.app.entities.User;
+import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.CreateCommentRequest;
 import com.example.app.requests.UpdateCommentRequest;
 import com.example.app.responses.CommentResponse;
@@ -45,37 +46,31 @@ public class CommentService {
         return comments.stream().map(CommentResponse::new).collect(Collectors.toList());
     }
 
-    public Comment getCommentById(Long commentId) {
-        return commentRepository.findById(commentId).orElse(null);
+    public Comment getCommentByIdOrThrow(Long id) {
+        return commentRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Comment not found"));
     }
 
     public Comment createComment(CreateCommentRequest request) {
-        System.out.println(request.toString());
-        User user = userService.getUserById(request.getUserId());
-        Post post = postService.getPostById(request.getPostId());
-        if(user != null && post !=null) {
-            Comment comment = new Comment();
-            comment.setPost(post);
-            comment.setUser(user);
-            comment.setText(request.getText());
-            comment.setCreateDate(LocalDateTime.now());
-            return commentRepository.save(comment);
-        }
-        return null;
+        User user = userService.getUserByIdOrThrow(request.getUserId());
+        Post post = postService.getPostByIdOrThrow(request.getPostId());
+
+        Comment comment = new Comment();
+        comment.setPost(post);
+        comment.setUser(user);
+        comment.setText(request.getText());
+        comment.setCreateDate(LocalDateTime.now());
+        return commentRepository.save(comment);
     }
 
-    public Comment updateCommentById(Long commentId, @RequestBody UpdateCommentRequest request) {
-        Comment comment = commentRepository.findById(commentId).orElse(null);
-        if(comment != null){
-            comment.setText(request.getText());
-            return commentRepository.save(comment);
-        } else {
-            return null;
-        }
+    public Comment updateCommentById(Long id, @RequestBody UpdateCommentRequest request) {
+        Comment comment = this.getCommentByIdOrThrow(id);
+        comment.setText(request.getText());
+        return commentRepository.save(comment);
     }
 
-    public void deleteCommentById(Long commentId) {
-        commentRepository.deleteById(commentId);
+    public void deleteCommentById(Long id) {
+        commentRepository.deleteById(id);
     }
 }
 

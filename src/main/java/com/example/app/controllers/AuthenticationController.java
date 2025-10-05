@@ -2,7 +2,7 @@ package com.example.app.controllers;
 
 import com.example.app.entities.RefreshToken;
 import com.example.app.entities.User;
-import com.example.app.exceptions.UserNotFoundException;
+import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.RefreshTokenRequest;
 import com.example.app.requests.UserRequest;
 import com.example.app.responses.AuthenticationResponse;
@@ -10,7 +10,6 @@ import com.example.app.security.JWTTokenProvider;
 import com.example.app.services.RefreshTokenService;
 import com.example.app.services.UserService;
 import com.example.app.utils.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -64,7 +63,7 @@ public class AuthenticationController {
             body.setUser(user);
 
             return ApiResponse.build(HttpStatus.OK, "Login successful", body);
-        } catch (AuthenticationException | UserNotFoundException e) {
+        } catch (AuthenticationException | NotFoundException e) {
             return ApiResponse.failure(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         } catch (Exception e) {
             e.printStackTrace();
