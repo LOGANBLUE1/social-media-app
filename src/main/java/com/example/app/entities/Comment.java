@@ -18,13 +18,11 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="post_id",nullable = false)
-    @JsonIgnore
     @OnDelete(action = OnDeleteAction.CASCADE)  // If the post is deleted, also delete the comment.
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id",nullable = false)
-    @JsonIgnore
     @OnDelete(action = OnDeleteAction.CASCADE)  // If the user is deleted, also delete the comment.
     private User user;
 

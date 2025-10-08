@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -34,17 +34,12 @@ public class PostService {
         this.likeService = likeService;
     }
 
-    public List<PostResponse> getAllPosts(Optional<Long> userId) {
-        List<Post> postList = userId
-                .map(postRepository::findByUserId)
-                .orElseGet(postRepository::findAll);
+    public List<PostResponse> getAllPosts(Long userId) {
+        List<Post> postList = postRepository.findByUserId(userId);
 
         return postList.stream()
-                .map(post -> {
-                    List<LikeResponse> likes = likeService.getAllLikes(Optional.empty(), Optional.of(post.getId()));
-                    return new PostResponse(post, likes);
-                })
-                .toList();
+                .map(post -> new PostResponse(post, likeService.getPostLikes(post.getId()))) // likes optional
+                .collect(Collectors.toList());
     }
 
     public Post getPostByIdOrThrow(Long postId) {
@@ -54,14 +49,14 @@ public class PostService {
 
     public PostResponse getPostByIdWithLikes(Long postId) {
         Post post = getPostByIdOrThrow(postId);
-        List<LikeResponse> likes = likeService.getAllLikes(Optional.empty(), Optional.of(postId));
+        List<LikeResponse> likes = likeService.getPostLikes(postId);
         return new PostResponse(post, likes);
     }
 
     public Post createPost(CreatePostRequest newPostRequest) {
         User user = userService.getUserByIdOrThrow(newPostRequest.getUserId());
         Post post = new Post();
-        post.setText(newPostRequest.getText());
+        post.setDescription(newPostRequest.getDescription());
         post.setTitle(newPostRequest.getTitle());
         post.setUser(user);
         post.setCreateDate(LocalDateTime.now());
@@ -70,7 +65,7 @@ public class PostService {
 
     public Post updatePostById(Long postId, UpdatePostRequest updatePostRequest) {
         Post post = getPostByIdOrThrow(postId);
-        post.setText(updatePostRequest.getText());
+        post.setDescription(updatePostRequest.getText());
         post.setTitle(updatePostRequest.getTitle());
         postRepository.save(post);
         return post;

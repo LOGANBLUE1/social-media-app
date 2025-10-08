@@ -72,8 +72,8 @@ public class SecurityConfiguration {
             .and()
             .authorizeHttpRequests()
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // allow preflight
-            .requestMatchers("/**").permitAll()         // login/register endpoints
-//            .requestMatchers("/auth/**").permitAll()
+//            .requestMatchers("/**").permitAll()         // login/register endpoints
+            .requestMatchers("/auth/**").permitAll()
             .anyRequest().authenticated();
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

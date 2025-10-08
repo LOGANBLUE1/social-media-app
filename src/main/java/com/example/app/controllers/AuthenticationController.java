@@ -6,6 +6,7 @@ import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.RefreshTokenRequest;
 import com.example.app.requests.UserRequest;
 import com.example.app.responses.AuthenticationResponse;
+import com.example.app.responses.UserResponse;
 import com.example.app.security.JWTTokenProvider;
 import com.example.app.services.RefreshTokenService;
 import com.example.app.services.UserService;
@@ -60,7 +61,7 @@ public class AuthenticationController {
             AuthenticationResponse body = new AuthenticationResponse();
             body.setAccessToken(jwtToken);
             body.setRefreshToken(refreshTokenService.createRefreshToken(user));
-            body.setUser(user);
+            body.setUser(new UserResponse(user));
 
             return ApiResponse.build(HttpStatus.OK, "Login successful", body);
         } catch (AuthenticationException | NotFoundException e) {
@@ -92,7 +93,7 @@ public class AuthenticationController {
         AuthenticationResponse body = new AuthenticationResponse();
         body.setAccessToken(jwtToken);
         body.setRefreshToken(refreshTokenService.createRefreshToken(user));
-        body.setUser(user);
+        body.setUser(new UserResponse(user));
 
         return ApiResponse.build(HttpStatus.CREATED, "User Successfully Registered", body);
     }

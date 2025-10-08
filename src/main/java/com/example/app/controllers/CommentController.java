@@ -26,9 +26,17 @@ public class CommentController {
         this.commentService = commentService;
     }
 
+//    @GetMapping
+//    public ResponseEntity<?> getAllComments(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
+//        return ApiResponse.success(commentService.getAllComments(userId, postId));
+//    }
+
     @GetMapping
-    public ResponseEntity<?> getAllComments(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
-        return ApiResponse.success(commentService.getAllComments(userId, postId));
+    public ResponseEntity<?> getAllPostComments(@RequestParam Long postId) {
+        if(postId == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "postId is required", null);
+        }
+        return ApiResponse.success(commentService.getAllPostComments(postId));
     }
 
     @PostMapping

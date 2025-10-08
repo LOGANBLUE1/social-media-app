@@ -32,7 +32,7 @@ public class RefreshTokenService {
             token =	new RefreshToken();
             token.setUser(user);
         }
-        token.setToken(UUID.randomUUID().toString());  //UUID ile random unique idler üretebiliriz.
+        token.setToken(UUID.randomUUID().toString());
         token.setExpiryDate(LocalDateTime.now().plusSeconds(expireSeconds));
         refreshTokenRepository.save(token);
         return token.getToken();

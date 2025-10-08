@@ -8,11 +8,11 @@ import lombok.Data;
 public class UserResponse {
     private Long id;
     private String username;
-    private String imageId;
+    private String image;
 
     public UserResponse(User user) {
         this.id = user.getId();
-        this.imageId = user.getImage();
+        this.image = user.getImage();
         this.username = user.getUsername();
     }
 }

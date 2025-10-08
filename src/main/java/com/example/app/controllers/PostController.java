@@ -4,10 +4,12 @@ import com.example.app.entities.Post;
 import com.example.app.requests.CreatePostRequest;
 import com.example.app.requests.UpdatePostRequest;
 import com.example.app.responses.PostResponse;
+import com.example.app.security.JWTUserDetails;
 import com.example.app.services.PostService;
 import com.example.app.utils.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,16 +24,15 @@ public class PostController {
         this.postService = postService;
     }
 
-    @GetMapping  // RequestParam =>  posts?userId=userId
-    public ResponseEntity<?> getAllPosts(@RequestParam Optional<Long> userId) {
-        return ApiResponse.success(postService.getAllPosts(userId));
+    @GetMapping("/me")
+    public ResponseEntity<?> getAllPosts(@AuthenticationPrincipal JWTUserDetails user) {
+        return ApiResponse.success(postService.getAllPosts(user.getId()));
     }
 
     @PostMapping
     public ResponseEntity<?> createPost(@RequestBody CreatePostRequest newPostRequest) {
         return ApiResponse.created(postService.createPost(newPostRequest));
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getPostById(@PathVariable Long id) {

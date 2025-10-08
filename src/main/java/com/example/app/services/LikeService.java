@@ -25,16 +25,13 @@ public class LikeService {
         this.postService = postService;
     }
 
-    public List<LikeResponse> getAllLikes(Optional<Long> userId, Optional<Long> postId) {
-        List<Like> list;
-        if(userId.isPresent() && postId.isPresent()) {
-            list = likeRepository.findByUserIdAndPostId(userId.get(), postId.get());
-        }else if(userId.isPresent()) {
-            list = likeRepository.findByUserId(userId.get());
-        }else if(postId.isPresent()) {
-            list = likeRepository.findByPostId(postId.get());
-        }else
-            list = likeRepository.findAll();
+    public List<LikeResponse> getPostLikes(Long postId) {
+        List<Like> list = likeRepository.findByPostId(postId);
+        return list.stream().map(LikeResponse::new).collect(Collectors.toList());
+    }
+
+    public List<LikeResponse> getUserLikes(Long userId) {
+        List<Like> list = likeRepository.findByUserId(userId);
         return list.stream().map(LikeResponse::new).collect(Collectors.toList());
     }
 

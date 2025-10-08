@@ -24,9 +24,19 @@ public class LikeController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllLikes(@RequestParam Optional<Long> userId,@RequestParam Optional<Long> postId) {
-        return ApiResponse.success(likeService.getAllLikes(userId, postId));
+    public ResponseEntity<?> getPostLikes(@RequestParam Long postId) {
+        if(postId == null){
+            return ApiResponse.build(HttpStatus.BAD_REQUEST, "postId is required", null);
+        }
+        return ApiResponse.success(likeService.getPostLikes(postId));
     }
+//    @GetMapping
+//    public ResponseEntity<?> getUserLikes(@RequestParam Long userId) {
+//        if(userId == null){
+//            return ApiResponse.build(HttpStatus.BAD_REQUEST, "userId is required", null);
+//        }
+//        return ApiResponse.success(likeService.getUserLikes(userId));
+//    }
 
     @PostMapping
     public ResponseEntity<?> createLike(@RequestBody CreateLikeRequest createLikeRequest) {

@@ -14,7 +14,6 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String username;
-    @JsonIgnore
     private String password;
     private String image;
 }

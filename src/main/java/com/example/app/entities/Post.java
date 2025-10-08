@@ -26,7 +26,7 @@ public class Post {
     // TODO: Change to @Lob later
 //    @Lob
     @Column(columnDefinition = "text")
-    private String text;
+    private String description;
 
     private LocalDateTime createDate;
 }

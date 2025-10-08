@@ -19,7 +19,7 @@ public class RefreshToken {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id", nullable=false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JsonIgnore
+
     User user; // delete the tokens if the user is deleted.
 
     @Column(nullable = false)

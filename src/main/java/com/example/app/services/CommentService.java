@@ -31,6 +31,10 @@ public class CommentService {
         this.userService = userService;
         this.postService = postService;
     }
+    public List<CommentResponse> getAllPostComments(Long postId){
+        List<Comment> comments = commentRepository.findByPostId(postId);
+        return comments.stream().map(CommentResponse::new).collect(Collectors.toList());
+    }
 
     public List<CommentResponse> getAllComments(Optional<Long> userId, Optional<Long> postId) {
         List<Comment> comments;
@@ -41,7 +45,7 @@ public class CommentService {
         } else if (postId.isPresent()){
             comments = commentRepository.findByPostId(postId.get());
         } else {
-            comments = commentRepository.findAll();
+            comments = null;
         }
         return comments.stream().map(CommentResponse::new).collect(Collectors.toList());
     }

@@ -37,6 +37,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch(Exception e) {
+            response.setContentType("application/json");
             return;
         }
         filterChain.doFilter(request, response);                                                           //spring securitye filtera devam et deriz.
