@@ -39,6 +39,10 @@ public class JWTTokenProvider {
                 compact();
     }
 
+    /**
+     * @throws JwtException if the token is malformed, expired or signed with another key.
+     *                      Raised by parseClaimsJws -- call validateToken first.
+     */
     Long getUserIdFromJWT(String token){
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key) // pass SecretKey, not raw string

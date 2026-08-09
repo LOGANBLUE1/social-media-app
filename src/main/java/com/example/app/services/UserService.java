@@ -38,20 +38,28 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User createUser(User user) {
+    public User save(User user) {
         return userRepository.save(user);
     }
 
+    /**
+     * @throws NotFoundException if userId has no row
+     */
     public User getUserByIdOrThrow(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
+    /**
+     * Profile fields only. Credentials are AuthService's concern -- any password in the
+     * request body is ignored; changing one goes through POST /auth/change-password.
+     *
+     * @throws NotFoundException if userId has no row. Raised by getUserByIdOrThrow.
+     */
     public User updateUserById(Long userId, UserRequest newUser) {
         User user = getUserByIdOrThrow(userId);
 
         user.setUsername(newUser.getUsername());
-        user.setPassword(newUser.getPassword());
         user.setImage(newUser.getImage());
         userRepository.save(user);
         return user;
@@ -65,6 +73,9 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
+    /**
+     * @return null when the user has no posts -- callers decide what that means for the response
+     */
     public UserActivityResponse getUserActivityById(Long userId) {
         List<Long> postIds = postRepository.findTop5ByUserId(userId);
         if(postIds.isEmpty()) {

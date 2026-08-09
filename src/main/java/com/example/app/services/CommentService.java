@@ -55,6 +55,10 @@ public class CommentService {
                 .orElseThrow(() -> new NotFoundException("Comment not found"));
     }
 
+    /**
+     * @throws NotFoundException if the request's userId or postId has no row. Raised by
+     *                           userService.getUserByIdOrThrow / postService.getPostByIdOrThrow.
+     */
     public Comment createComment(CreateCommentRequest request) {
         User user = userService.getUserByIdOrThrow(request.getUserId());
         Post post = postService.getPostByIdOrThrow(request.getPostId());
@@ -67,6 +71,9 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
+    /**
+     * @throws NotFoundException if id has no row. Raised by getCommentByIdOrThrow.
+     */
     public Comment updateCommentById(Long id, @RequestBody UpdateCommentRequest request) {
         Comment comment = this.getCommentByIdOrThrow(id);
         comment.setText(request.getText());

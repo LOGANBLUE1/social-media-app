@@ -40,16 +40,17 @@ public class LikeService {
                 .orElseThrow(() -> new NotFoundException("Like not found"));
     }
 
+    /**
+     * @throws NotFoundException if the request's userId or postId has no row. Raised by
+     *                           userService.getUserByIdOrThrow / postService.getPostByIdOrThrow.
+     */
     public Like createLike(CreateLikeRequest CreateLikeRequest) {
         User user = userService.getUserByIdOrThrow(CreateLikeRequest.getUserId());
         Post post = postService.getPostByIdOrThrow(CreateLikeRequest.getPostId());
-        if(user != null && post != null) {
-            Like like = new Like();
-            like.setPost(post);
-            like.setUser(user);
-            return likeRepository.save(like);
-        }else
-            return null;
+        Like like = new Like();
+        like.setPost(post);
+        like.setUser(user);
+        return likeRepository.save(like);
     }
 
     public void deleteLikeById(Long likeId) {

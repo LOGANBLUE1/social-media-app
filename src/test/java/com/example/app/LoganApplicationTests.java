@@ -9,5 +9,4 @@ class LoganApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

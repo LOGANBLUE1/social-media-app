@@ -47,28 +47,38 @@ public class PostService {
                 .orElseThrow(() -> new NotFoundException("Post not found"));
     }
 
+    /**
+     * @throws NotFoundException if postId has no row. Raised by getPostByIdOrThrow.
+     */
     public PostResponse getPostByIdWithLikes(Long postId) {
         Post post = getPostByIdOrThrow(postId);
         List<LikeResponse> likes = likeService.getPostLikes(postId);
         return new PostResponse(post, likes);
     }
 
-    public Post createPost(CreatePostRequest newPostRequest) {
+    /**
+     * @throws NotFoundException if the request's userId has no row. Raised by
+     *                           userService.getUserByIdOrThrow.
+     */
+    public PostResponse createPost(CreatePostRequest newPostRequest) {
         User user = userService.getUserByIdOrThrow(newPostRequest.getUserId());
         Post post = new Post();
         post.setDescription(newPostRequest.getDescription());
         post.setTitle(newPostRequest.getTitle());
         post.setUser(user);
         post.setCreateDate(LocalDateTime.now());
-        return postRepository.save(post);
+        return new PostResponse(postRepository.save(post), List.of()); // a new post has no likes yet
     }
 
-    public Post updatePostById(Long postId, UpdatePostRequest updatePostRequest) {
+    /**
+     * @throws NotFoundException if postId has no row. Raised by getPostByIdOrThrow.
+     */
+    public PostResponse updatePostById(Long postId, UpdatePostRequest updatePostRequest) {
         Post post = getPostByIdOrThrow(postId);
         post.setDescription(updatePostRequest.getText());
         post.setTitle(updatePostRequest.getTitle());
         postRepository.save(post);
-        return post;
+        return new PostResponse(post, likeService.getPostLikes(postId));
     }
 
     public void deletePostById(Long postId) {

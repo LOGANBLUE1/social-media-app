@@ -3,13 +3,12 @@ package com.example.app.controllers;
 import com.example.app.entities.User;
 import com.example.app.exceptions.NotFoundException;
 import com.example.app.requests.UserRequest;
+import com.example.app.responses.UserActivityResponse;
 import com.example.app.responses.UserResponse;
 import com.example.app.security.JWTUserDetails;
 import com.example.app.services.UserService;
-import com.example.app.utils.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.app.utils.Response;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    @Autowired
     private final UserService userService;
 
     public UserController(UserService userService){  //constructor injection
@@ -26,41 +24,37 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllUsers(){
-        var a = userService.getAllUsers();
-        var list =  a.stream()
+    public Response<List<UserResponse>> getAllUsers(){
+        List<UserResponse> users = userService.getAllUsers().stream()
                 .map(UserResponse::new)   // calls new UserResponse(user) for each
                 .toList();
-        return ApiResponse.success(list);
+        return Response.success(users);
     }
+
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal JWTUserDetails usr){
+    public Response<UserResponse> getCurrentUser(@AuthenticationPrincipal JWTUserDetails usr){
         User user = userService.getUserByIdOrThrow(usr.getId());
-        return ApiResponse.success(new UserResponse(user));
+        return Response.success(new UserResponse(user));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<?> updateCurrentUser(@AuthenticationPrincipal JWTUserDetails user, @RequestBody UserRequest newUser){
+    public Response<UserResponse> updateCurrentUser(@AuthenticationPrincipal JWTUserDetails user, @RequestBody UserRequest newUser){
         User updatedUser = userService.updateUserById(user.getId(), newUser);
         if(updatedUser==null){
             throw new NotFoundException();
         }
-        return ApiResponse.success(new UserResponse(updatedUser));
+        return Response.success(new UserResponse(updatedUser));
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<?> deleteCurrentUser(@AuthenticationPrincipal JWTUserDetails user){
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCurrentUser(@AuthenticationPrincipal JWTUserDetails user){
         userService.deleteUserById(user.getId());
-        return ApiResponse.build(HttpStatus.NO_CONTENT, "success", null);
     }
 
     @GetMapping("/activity/me")
-    public ResponseEntity<?> getCurrentUserActivity(@AuthenticationPrincipal JWTUserDetails user){
-        var res = userService.getUserActivityById(user.getId());
-        if(res==null){
-            throw new IllegalArgumentException();
-        }
-        return ApiResponse.success(res);
+    public Response<UserActivityResponse> getCurrentUserActivity(@AuthenticationPrincipal JWTUserDetails user){
+        return Response.success(activityOrThrow(user.getId()));
     }
 
 //    @PostMapping
@@ -88,11 +82,15 @@ public class UserController {
 //    }
 
     @GetMapping("/activity/{userId}")
-    public ResponseEntity<?> getUserActivityById(@PathVariable Long userId){
-        var res = userService.getUserActivityById(userId);
-        if(res==null){
-            throw new IllegalArgumentException();
+    public Response<UserActivityResponse> getUserActivityById(@PathVariable Long userId){
+        return Response.success(activityOrThrow(userId));
+    }
+
+    private UserActivityResponse activityOrThrow(Long userId) {
+        UserActivityResponse activity = userService.getUserActivityById(userId);
+        if (activity == null) {
+            throw new IllegalArgumentException("No activity found for this user");
         }
-        return ApiResponse.success(res);
+        return activity;
     }
 }

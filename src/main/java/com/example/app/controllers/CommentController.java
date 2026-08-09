@@ -7,15 +7,12 @@ import com.example.app.requests.UpdateCommentRequest;
 import com.example.app.responses.CommentResponse;
 import com.example.app.security.JWTUserDetails;
 import com.example.app.services.CommentService;
-import com.example.app.utils.ApiResponse;
+import com.example.app.utils.Response;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/comments")
@@ -27,52 +24,40 @@ public class CommentController {
     }
 
 //    @GetMapping
-//    public ResponseEntity<?> getAllComments(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
-//        return ApiResponse.success(commentService.getAllComments(userId, postId));
+//    public Response<List<CommentResponse>> getAllComments(@RequestParam Optional<Long> userId, @RequestParam Optional<Long> postId) {
+//        return Response.success(commentService.getAllComments(userId, postId));
 //    }
 
     @GetMapping
-    public ResponseEntity<?> getAllPostComments(@RequestParam Long postId) {
-        if(postId == null){
-            return ApiResponse.build(HttpStatus.BAD_REQUEST, "postId is required", null);
-        }
-        return ApiResponse.success(commentService.getAllPostComments(postId));
+    public Response<List<CommentResponse>> getAllPostComments(@RequestParam Long postId) {
+        return Response.success(commentService.getAllPostComments(postId));
     }
 
     @PostMapping
-    public ResponseEntity<?> createComment(@RequestBody CreateCommentRequest createCommentRequest, @AuthenticationPrincipal JWTUserDetails user){
+    @ResponseStatus(HttpStatus.CREATED)
+    public Response<CommentResponse> createComment(@RequestBody CreateCommentRequest createCommentRequest,
+                                              @AuthenticationPrincipal JWTUserDetails user) {
         createCommentRequest.setUserId(user.getId());
-        var res = commentService.createComment(createCommentRequest);
-        if(res==null){
-            return ApiResponse.build(HttpStatus.BAD_REQUEST, "userId and postId are required", null);
+        Comment comment = commentService.createComment(createCommentRequest);
+        if (comment == null) {
+            throw new IllegalArgumentException("userId and postId are required");
         }
-        return ApiResponse.build(HttpStatus.CREATED, "success", res);
+        return Response.success(new CommentResponse(comment), "success");
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getCommentById(@PathVariable Long id){
-        if(id == null){
-            return ApiResponse.build(HttpStatus.BAD_REQUEST, "id is required", null);
-        }
-        var res = commentService.getCommentByIdOrThrow(id);
-        return ApiResponse.success(res);
+    public Response<CommentResponse> getCommentById(@PathVariable Long id) {
+        return Response.success(new CommentResponse(commentService.getCommentByIdOrThrow(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCommentById(@PathVariable Long id, @RequestBody UpdateCommentRequest updateCommentRequest){
-        if(id == null){
-            return ApiResponse.build(HttpStatus.BAD_REQUEST, "id is required", null);
-        }
-        var res = commentService.updateCommentById(id, updateCommentRequest);
-        return ApiResponse.success(res);
+    public Response<CommentResponse> updateCommentById(@PathVariable Long id, @RequestBody UpdateCommentRequest updateCommentRequest) {
+        return Response.success(new CommentResponse(commentService.updateCommentById(id, updateCommentRequest)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCommentById(@PathVariable Long id){
-        if(id == null){
-            return ApiResponse.build(HttpStatus.BAD_REQUEST, "commentId is required", null);
-        }
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCommentById(@PathVariable Long id) {
         commentService.deleteCommentById(id);
-        return ApiResponse.deleted();
     }
 }

@@ -73,6 +73,9 @@ public class SecurityConfiguration {
             .authorizeHttpRequests()
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // allow preflight
 //            .requestMatchers("/**").permitAll()         // login/register endpoints
+            // must precede the /auth/** wildcard below -- first match wins, and this one
+            // needs a principal to know whose password is being changed
+            .requestMatchers("/auth/change-password").authenticated()
             .requestMatchers("/auth/**").permitAll()
             .anyRequest().authenticated();
 
