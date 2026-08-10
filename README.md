@@ -1,56 +1,94 @@
-# Welcome to your Expo app 👋
+# social-media-app-client
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo + TypeScript client for the [social-media-app-server](../social-media-app-server) Spring
+Boot API. One codebase targets **Android**, **web** and (for free) iOS.
 
-## Get started
+## Running it
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+The server must be up first — Postgres on `:5432` with database `logandb`, then
+`./mvnw spring-boot:run` in the server repo.
 
 ```bash
-npm run reset-project
+npm run web        # browser
+npm run android    # Android emulator or connected device
+npm start          # dev server; press a / w / i to pick a target
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Pointing at the server
 
-### Other setup steps
+`src/config.ts` resolves the base URL per platform:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+| Target | Default |
+| --- | --- |
+| web, iOS simulator | `http://localhost:8080` |
+| Android emulator | `http://10.0.2.2:8080` — the emulator's alias for the host loopback |
+| Physical Android device | **must** be set explicitly |
 
-## Learn more
+For a physical device, copy `.env.example` to `.env` and set your machine's LAN address:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+echo "EXPO_PUBLIC_API_URL=http://$(ipconfig getifaddr en0):8080" > .env
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+`android.usesCleartextTraffic` is enabled in `app.json` because the dev server is plain HTTP
+and Android 9+ blocks cleartext by default. Turn it off before shipping anything real.
 
-## Join the community
+## Layout
 
-Join our community of developers creating universal apps.
+```
+src/
+  api/          transport + endpoint modules. No React, no platform APIs, no window.
+    client.ts   bearer header, envelope unwrap, single-flight refresh on 401
+    types.ts    hand-mirrored from the Java DTOs
+    instance.ts the shared ApiClient (separate module to avoid a require cycle)
+  auth/
+    session-store.ts   TokenStorage interface + shared helpers
+    storage.native.ts  expo-secure-store (Keystore / Keychain)
+    storage.web.ts     localStorage
+    storage.ts         in-memory fallback (used by the static web prerender in Node)
+    auth-context.tsx   session state, login / signup / logout
+  hooks/        TanStack Query wrappers
+  app/          Expo Router routes
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The portability rule: **nothing under `src/api/` may import React or touch a platform API.**
+Persistence reaches it only through `api.onSessionChange`. That is what lets the same
+transport serve Android, the browser, and any future client.
+
+Metro picks `storage.native.ts` / `storage.web.ts` automatically from the file extension, so
+`import { storage } from './storage'` resolves correctly per platform.
+
+## Server behaviour worth knowing
+
+These are quirks of the current API that the client works around — verified against a running
+server, not inferred:
+
+- **`POST /auth/refresh` returns only `accessToken`.** `refreshToken` and `user` come back
+  `null`, so `doRefresh()` spreads the existing session instead of replacing it.
+- **`POST /posts` and `POST /likes` read the author from the request body**, not the token, so
+  the client sends `userId`. Delete that field once the server uses
+  `@AuthenticationPrincipal` (comments already do).
+- **401s from the security filter have an empty body.** `JWTAuthenticationEntryPoint` calls
+  `response.sendError(...)`, which bypasses the `Response` envelope entirely, so `unwrap()`
+  tolerates a non-envelope, non-JSON, zero-length response.
+- **`POST /likes` returns the bare `Like` entity**, whose `post` and `user` are `@JsonIgnore`d
+  — only `{ id }` survives. Liking therefore refetches the post rather than patching the cache.
+- **Access tokens last ~6 minutes** (`question.expires.in=350000` ms), so the refresh path is
+  exercised constantly rather than rarely.
+- **The JWT signing key is regenerated on every server restart**
+  (`JWTTokenProvider` uses `Keys.secretKeyFor(...)` in a field initialiser). Every restart
+  invalidates every stored session, so expect to log in again after each server reload.
+- **The server stores one refresh token per user, not per device.** Logging in on Android
+  invalidates the browser's refresh token and vice versa. Fixing this is a prerequisite for
+  genuinely using both clients at once.
+- **There is no feed endpoint and no pagination** — `GET /posts/me` returns all of your own
+  posts and nothing from anyone else.
+
+## Not built yet
+
+- Push notifications (`expo-notifications` → FCM for Android; Web Push + a service worker for
+  the browser, which `expo-notifications` does not cover). Needs a `device_tokens` table and a
+  registration endpoint server-side first.
+- Editing and deleting posts/comments — the API modules (`posts.update`, `comments.remove`, …)
+  are written and typed, but no screen calls them.
+- Profile screen, other users' posts, avatar upload.
