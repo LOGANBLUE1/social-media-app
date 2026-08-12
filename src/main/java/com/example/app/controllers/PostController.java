@@ -1,6 +1,5 @@
 package com.example.app.controllers;
 
-import com.example.app.entities.Post;
 import com.example.app.requests.CreatePostRequest;
 import com.example.app.requests.UpdatePostRequest;
 import com.example.app.responses.PostResponse;
@@ -24,7 +23,7 @@ public class PostController {
 
     @GetMapping("/me")
     public Response<List<PostResponse>> getAllPosts(@AuthenticationPrincipal JWTUserDetails user) {
-        return Response.success(postService.getAllPosts(user.getId()));
+        return Response.success(postService.getAllPosts(user.getId(), user.getId()));
     }
 
     @PostMapping
@@ -34,13 +33,16 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public Response<PostResponse> getPostById(@PathVariable Long id) {
-        return Response.success(postService.getPostByIdWithLikes(id));
+    public Response<PostResponse> getPostById(@PathVariable Long id,
+                                              @AuthenticationPrincipal JWTUserDetails user) {
+        return Response.success(postService.getPostByIdWithStats(id, user.getId()));
     }
 
     @PutMapping("/{id}")
-    public Response<PostResponse> updatePostById(@PathVariable Long id, @RequestBody UpdatePostRequest updatePostRequest) {
-        return Response.success(postService.updatePostById(id, updatePostRequest));
+    public Response<PostResponse> updatePostById(@PathVariable Long id,
+                                                 @RequestBody UpdatePostRequest updatePostRequest,
+                                                 @AuthenticationPrincipal JWTUserDetails user) {
+        return Response.success(postService.updatePostById(id, updatePostRequest, user.getId()));
     }
 
     @DeleteMapping("/{id}")

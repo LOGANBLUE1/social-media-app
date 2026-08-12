@@ -57,4 +57,17 @@ public class LikeService {
         likeRepository.deleteById(likeId);
     }
 
+    /**
+     * Unlike by post rather than by like id. Clients know which post they are looking at but no
+     * longer receive the like rows -- PostResponse carries a count and likedByMe -- so they have
+     * no id to delete by.
+     *
+     * @throws NotFoundException if the user has not liked the post
+     */
+    public void deleteLikeByPostId(Long userId, Long postId) {
+        Like like = likeRepository.findFirstByUserIdAndPostId(userId, postId)
+                .orElseThrow(() -> new NotFoundException("Like not found"));
+        likeRepository.delete(like);
+    }
+
 }

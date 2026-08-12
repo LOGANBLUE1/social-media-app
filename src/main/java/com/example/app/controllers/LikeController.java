@@ -4,9 +4,11 @@ package com.example.app.controllers;
 import com.example.app.entities.Like;
 import com.example.app.requests.CreateLikeRequest;
 import com.example.app.responses.LikeResponse;
+import com.example.app.security.JWTUserDetails;
 import com.example.app.services.LikeService;
 import com.example.app.utils.Response;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,5 +47,13 @@ public class LikeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLikeById(@PathVariable Long id) {
         likeService.deleteLikeById(id);
+    }
+
+    /** Removes the caller's own like on a post -- the counterpart to POST /likes for a toggle. */
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLikeByPostId(@RequestParam Long postId,
+                                   @AuthenticationPrincipal JWTUserDetails user) {
+        likeService.deleteLikeByPostId(user.getId(), postId);
     }
 }
