@@ -21,18 +21,18 @@ export function Button({ title, loading, variant = 'primary', disabled, style, .
       style={[
         styles.base,
         variant === 'primary'
-          ? { backgroundColor: '#3c87f7' }
+          ? { backgroundColor: theme.tint }
           : { backgroundColor: theme.backgroundElement },
         inactive && styles.inactive,
         typeof style === 'object' && style,
       ]}
       {...rest}>
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#ffffff' : theme.text} />
+        <ActivityIndicator color={variant === 'primary' ? theme.onTint : theme.text} />
       ) : (
         <ThemedText
           type="smallBold"
-          style={variant === 'primary' ? styles.primaryLabel : { color: theme.text }}>
+          style={{ color: variant === 'primary' ? theme.onTint : theme.text }}>
           {title}
         </ThemedText>
       )}
@@ -51,8 +51,5 @@ const styles = StyleSheet.create({
   },
   inactive: {
     opacity: 0.5,
-  },
-  primaryLabel: {
-    color: '#ffffff',
   },
 });

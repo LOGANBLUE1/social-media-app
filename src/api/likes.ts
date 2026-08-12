@@ -18,3 +18,11 @@ export function create(userId: number, postId: number): Promise<CreatedLike> {
 export function remove(likeId: number): Promise<void> {
   return api.delete<void>(`/likes/${likeId}`);
 }
+
+/**
+ * Removes the caller's own like on a post. `PostResponse` carries only a count and `likedByMe`,
+ * so there is no like id on hand to pass to `remove`. 404s when the caller has not liked it.
+ */
+export function removeByPost(postId: number): Promise<void> {
+  return api.delete<void>(`/likes?postId=${postId}`);
+}

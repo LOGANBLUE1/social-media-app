@@ -7,20 +7,35 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/**
+ * Light purple palette. Surfaces are near-white with a violet cast and step up in three barely
+ * separated tones (background -> backgroundElement -> backgroundSelected); saturated purple is
+ * reserved for `tint`, the accent every interactive surface uses (buttons, links, the like
+ * button, the selected nav tab). `onTint` is the only text color guaranteed to be readable on
+ * top of `tint`, so pair the two -- never put `text` on a tinted background.
+ */
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#1E1533',
+    background: '#F6F2FE',
+    backgroundElement: '#EBE3FB',
+    backgroundSelected: '#DCD0F8',
+    textSecondary: '#615579',
+    tint: '#6D42D9',
+    onTint: '#FFFFFF',
+    border: '#DCD0F8',
+    danger: '#C62828',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#F4F1FF',
+    background: '#141024',
+    backgroundElement: '#221B3A',
+    backgroundSelected: '#31284F',
+    textSecondary: '#B3A8D4',
+    tint: '#A78BFA',
+    onTint: '#1F1633',
+    border: '#31284F',
+    danger: '#FF8A80',
   },
 } as const;
 

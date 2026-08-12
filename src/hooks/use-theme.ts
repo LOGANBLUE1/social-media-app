@@ -4,11 +4,12 @@
  */
 
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
+/**
+ * The app is light-only by design: it always renders the purple-on-white palette, regardless
+ * of the device color scheme. Switch this back to reading `useColorScheme()` (and restore the
+ * dark branch in the root layout's navigation theme) if dark mode is ever wanted.
+ */
 export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
-
-  return Colors[theme];
+  return Colors.light;
 }

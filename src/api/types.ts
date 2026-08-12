@@ -41,8 +41,11 @@ export interface PostResponse {
   description: string;
   /** ISO-8601 local date-time, e.g. "2026-08-10T14:03:11.482" -- no timezone offset. */
   createdAt: string;
-  /** Populated by `GET /posts/{id}`, `GET /posts/me` and `GET /feed`; may be null. */
-  likes: LikeResponse[] | null;
+  author: UserResponse;
+  likeCount: number;
+  commentCount: number;
+  /** Whether the caller has liked this post. Drives the like button without a second request. */
+  likedByMe: boolean;
 }
 
 export interface CommentResponse {
@@ -63,6 +66,47 @@ export interface UserLikeProjection {
   postId: number;
   username: string;
   image: string | null;
+}
+
+/** Persisted as a string server-side (`FriendRequestStatus`), so these spellings are the wire format. */
+export type FriendRequestStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
+
+/**
+ * Carries both sides of the request rather than "the other user", because the incoming and
+ * outgoing lists render opposite sides of the same row.
+ */
+export interface FriendRequestResponse {
+  id: number;
+  requester: UserResponse;
+  addressee: UserResponse;
+  status: FriendRequestStatus;
+  /** ISO-8601 local date-time, no timezone offset -- same shape as PostResponse.createdAt. */
+  createdAt: string;
+  /** Null while the request is still PENDING. */
+  respondedAt: string | null;
+}
+
+/** A 1:1 chat seen from the caller's side -- the server resolves which participant is "the other". */
+export interface ConversationResponse {
+  id: number;
+  otherUser: UserResponse;
+  /** Seeded to the creation time, so it is never null even before the first message. */
+  lastMessageAt: string;
+  /** How many messages the conversation holds -- also the seq of its newest message. */
+  lastSeq: number;
+}
+
+/**
+ * Carries only `senderId`, not the whole user: a 1:1 chat has two participants and the client
+ * already knows both from the conversation.
+ */
+export interface MessageResponse {
+  id: number;
+  /** Position in the conversation. Sort on this, not createdAt. */
+  seq: number;
+  senderId: number;
+  body: string;
+  createdAt: string;
 }
 
 export interface UserActivityResponse {
@@ -117,6 +161,20 @@ export interface UpdateCommentRequest {
 export interface CreateLikeRequest {
   userId: number;
   postId: number;
+}
+
+/** The other participant. The caller is taken from the principal. */
+export interface CreateConversationRequest {
+  userId: number;
+}
+
+export interface CreateMessageRequest {
+  body: string;
+}
+
+/** The requester is taken from the token, never the body -- only the addressee is sent. */
+export interface CreateFriendRequest {
+  addresseeId: number;
 }
 
 export interface RefreshTokenRequest {

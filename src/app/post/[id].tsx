@@ -48,7 +48,7 @@ export default function PostDetailScreen() {
   if (post.error || !post.data) {
     return (
       <ThemedView style={styles.centered}>
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="danger">
           {post.error?.message ?? 'Post not found'}
         </ThemedText>
         <Button title="Retry" variant="secondary" onPress={() => post.refetch()} />
@@ -69,12 +69,12 @@ export default function PostDetailScreen() {
             onPress={() => like.mutate()}
             style={[
               styles.likeButton,
-              { backgroundColor: like.likedByMe ? '#3c87f7' : theme.backgroundElement },
+              { backgroundColor: like.likedByMe ? theme.tint : theme.backgroundElement },
               like.isPending && styles.pending,
             ]}>
             <ThemedText
               type="smallBold"
-              style={like.likedByMe ? styles.likedLabel : { color: theme.text }}>
+              style={{ color: like.likedByMe ? theme.onTint : theme.text }}>
               {like.likedByMe ? 'Liked' : 'Like'}
             </ThemedText>
           </Pressable>
@@ -84,7 +84,7 @@ export default function PostDetailScreen() {
         </View>
 
         {like.error && (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" themeColor="danger">
             {like.error.message}
           </ThemedText>
         )}
@@ -95,7 +95,7 @@ export default function PostDetailScreen() {
 
         {comments.isLoading && <ActivityIndicator />}
         {comments.error && (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" themeColor="danger">
             {comments.error.message}
           </ThemedText>
         )}
@@ -123,7 +123,7 @@ export default function PostDetailScreen() {
             style={styles.multiline}
           />
           {createComment.error && (
-            <ThemedText type="small" style={styles.error}>
+            <ThemedText type="small" themeColor="danger">
               {createComment.error.message}
             </ThemedText>
           )}
@@ -172,9 +172,6 @@ const styles = StyleSheet.create({
   pending: {
     opacity: 0.5,
   },
-  likedLabel: {
-    color: '#ffffff',
-  },
   sectionTitle: {
     marginTop: Spacing.three,
   },
@@ -190,8 +187,5 @@ const styles = StyleSheet.create({
   multiline: {
     minHeight: 72,
     textAlignVertical: 'top',
-  },
-  error: {
-    color: '#d93025',
   },
 });

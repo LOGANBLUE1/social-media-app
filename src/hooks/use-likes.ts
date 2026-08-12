@@ -8,35 +8,45 @@ import { postKeys } from './use-posts';
 /**
  * Toggles the caller's like on a post.
  *
- * There is no "unlike by postId" endpoint -- deletion is by like id -- so the id is recovered
- * from the post's embedded like list. That means this depends on the post detail query having
- * loaded, which it has whenever the button is on screen.
+ * `PostResponse` carries `likedByMe` and `likeCount` rather than the like rows, so unliking goes
+ * through `DELETE /likes?postId=` -- there is no like id on the client to delete by.
  */
 export function useToggleLike(post: PostResponse | undefined) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const own = user ? post?.likes?.find((like) => like.userId === user.id) : undefined;
+  const likedByMe = post?.likedByMe ?? false;
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!user || !post) throw new Error('Not ready');
-      if (own) {
-        await likes.remove(own.id);
+      if (likedByMe) {
+        await likes.removeByPost(post.id);
       } else {
         // The (post_id, user_id) unique constraint turns a double-tap into a 409; refetching
-        // below keeps `own` accurate so that stays an edge case rather than the norm.
+        // below keeps `likedByMe` accurate so that stays an edge case rather than the norm.
         await likes.create(user.id, post.id);
       }
     },
     onSuccess: () => {
-      if (post) {
-        // Refetch rather than patch the cache: POST /likes returns only { id }, so the client
-        // cannot construct the LikeResponse the post detail expects.
-        return queryClient.invalidateQueries({ queryKey: postKeys.detail(post.id) });
-      }
+      if (!post) return;
+
+      // Patch the caches rather than invalidating them: the detail view and both lists render the
+      // same count, and refetching every post to move one number by one is not worth a round-trip.
+      // The caller's own toggle is always exactly +/-1, so the local result matches the server.
+      const delta = likedByMe ? -1 : 1;
+      const patch = (target: PostResponse): PostResponse =>
+        target.id === post.id
+          ? { ...target, likeCount: target.likeCount + delta, likedByMe: !likedByMe }
+          : target;
+
+      queryClient.setQueryData<PostResponse>(postKeys.detail(post.id), (old) =>
+        old ? patch(old) : old,
+      );
+      queryClient.setQueryData<PostResponse[]>(postKeys.feed, (old) => old?.map(patch));
+      queryClient.setQueryData<PostResponse[]>(postKeys.mine, (old) => old?.map(patch));
     },
   });
 
-  return { ...mutation, likedByMe: !!own, count: post?.likes?.length ?? 0 };
+  return { ...mutation, likedByMe, count: post?.likeCount ?? 0 };
 }

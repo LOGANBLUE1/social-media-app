@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { posts, type PostResponse } from '@/api';
+import { posts } from '@/api';
 import { useAuth } from '@/auth/auth-context';
 
 export const postKeys = {
@@ -59,6 +59,23 @@ export function useCreatePost() {
   });
 }
 
+export function useUpdatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    // Note the field rename: the update endpoint takes `text` where create takes `description`,
+    // and both write Post.description -- see UpdatePostRequest.
+    mutationFn: ({ id, title, description }: { id: number; title: string; description: string }) =>
+      posts.update(id, { title, text: description }),
+    onSuccess: (_result, { id }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: postKeys.feed }),
+        queryClient.invalidateQueries({ queryKey: postKeys.mine }),
+        queryClient.invalidateQueries({ queryKey: postKeys.detail(id) }),
+      ]),
+  });
+}
+
 export function useDeletePost() {
   const queryClient = useQueryClient();
 
@@ -72,9 +89,4 @@ export function useDeletePost() {
       ]);
     },
   });
-}
-
-/** Convenience for rendering: `PostResponse.likes` is nullable. */
-export function likeCount(post: Pick<PostResponse, 'likes'>): number {
-  return post.likes?.length ?? 0;
 }

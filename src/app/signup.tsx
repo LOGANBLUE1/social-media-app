@@ -65,7 +65,7 @@ export default function SignupScreen() {
         />
 
         {error && (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" themeColor="danger">
             {error}
           </ThemedText>
         )}
@@ -91,9 +91,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     gap: Spacing.three,
-  },
-  error: {
-    color: '#d93025',
   },
   link: {
     alignSelf: 'center',
