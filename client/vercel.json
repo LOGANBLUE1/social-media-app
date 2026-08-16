@@ -1,7 +1,7 @@
 {
-  "buildCommand": "expo export -p web",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "devCommand": "expo",
+  "devCommand": "npm run start",
   "cleanUrls": true,
   "framework": null,
   "rewrites": [
