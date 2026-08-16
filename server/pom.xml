@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.0.2</version>
+		<version>3.5.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -92,6 +92,23 @@
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
+		</dependency>
+
+		<!--
+			Schema migrations. Versions come from the Spring Boot parent (Flyway 11.x), which is
+			why the bump to 3.5.3 had to come first: 3.0.2 pins Flyway 9.5.1, which predates and
+			refuses to run against PostgreSQL 16.
+
+			flyway-database-postgresql is a separate artifact from Flyway 10 onwards. Core alone
+			builds fine and then fails at runtime with "Unsupported Database: PostgreSQL".
+		-->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
 
 		<!-- Testing -->

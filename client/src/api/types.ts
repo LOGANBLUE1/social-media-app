@@ -94,6 +94,11 @@ export interface ConversationResponse {
   lastMessageAt: string;
   /** How many messages the conversation holds -- also the seq of its newest message. */
   lastSeq: number;
+  /**
+   * Messages from the other person the caller has not read. Server-computed as
+   * `lastSeq - <caller's read pointer>`, so it drops to 0 as soon as `markRead` lands.
+   */
+  unreadCount: number;
 }
 
 /**
@@ -170,6 +175,14 @@ export interface CreateConversationRequest {
 
 export interface CreateMessageRequest {
   body: string;
+}
+
+/**
+ * How far the caller has read. Send the newest seq actually rendered, not "everything" -- the chat
+ * screen polls, so a message can land between the render and this request.
+ */
+export interface MarkConversationReadRequest {
+  lastReadSeq: number;
 }
 
 /** The requester is taken from the token, never the body -- only the addressee is sent. */

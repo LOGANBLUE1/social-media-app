@@ -3,6 +3,7 @@ package com.example.app.configuration;
 import com.example.app.security.JWTAuthenticationEntryPoint;
 import com.example.app.security.JWTAuthenticationFilter;
 import com.example.app.services.UserDetailsServiceImpl;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -48,12 +49,21 @@ public class SecurityConfiguration {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    /**
+     * Browser origins allowed to call this API, from app.cors.allowed-origins.
+     *
+     * This was "*", which is only survivable while the API is unreachable from the internet. Paired
+     * with allowCredentials it is also the combination browsers refuse outright. Native builds are
+     * unaffected either way -- an app sends no Origin header, so CORS never applies to it; this
+     * governs the web build alone.
+     */
     @Bean
-    public CorsFilter corsFilter() {
+    public CorsFilter corsFilter(
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of("*")); // allow all origins
+        config.setAllowedOrigins(allowedOrigins);
         config.addAllowedHeader("*");
         config.addAllowedMethod("*"); // allow all HTTP methods
         source.registerCorsConfiguration("/**", config);

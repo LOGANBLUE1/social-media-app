@@ -1,0 +1,12 @@
+# Keeping the build context small matters twice: it is uploaded to the daemon on every build, and
+# anything copied in can end up in a layer.
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.git/
+.gitignore
+*.md
+main.http
+.env
+.DS_Store

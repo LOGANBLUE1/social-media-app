@@ -68,11 +68,19 @@ function ConversationRow({
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const unread = conversation.unreadCount;
 
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
+      // Read out as one label so the count is announced with the name rather than as a loose
+      // number after it.
+      accessibilityLabel={
+        unread > 0
+          ? `${conversation.otherUser.username}, ${unread} unread ${unread === 1 ? 'message' : 'messages'}`
+          : conversation.otherUser.username
+      }
       style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
       <Avatar
         username={conversation.otherUser.username}
@@ -81,12 +89,29 @@ function ConversationRow({
       />
       <View style={styles.details}>
         <ThemedText type="smallBold">{conversation.otherUser.username}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText
+          type={unread > 0 ? 'smallBold' : 'small'}
+          themeColor={unread > 0 ? 'text' : 'textSecondary'}>
+          {/* Still keyed on lastSeq rather than just printing the timestamp: lastMessageAt is
+              seeded to the creation time, so an empty chat would otherwise show a time no
+              message was ever sent at. */}
           {conversation.lastSeq === 0
             ? 'No messages yet'
-            : `${conversation.lastSeq} ${conversation.lastSeq === 1 ? 'message' : 'messages'} · ${formatTimestamp(conversation.lastMessageAt)}`}
+            : formatTimestamp(conversation.lastMessageAt)}
         </ThemedText>
       </View>
+      {unread > 0 && (
+        // Already covered by the row's accessibilityLabel, so hide it from screen readers rather
+        // than have the count announced twice.
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[styles.badge, { backgroundColor: theme.tint }]}>
+          <ThemedText type="smallBold" style={[styles.badgeCount, { color: theme.onTint }]}>
+            {unread > 99 ? '99+' : unread}
+          </ThemedText>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -118,6 +143,20 @@ const styles = StyleSheet.create({
   details: {
     flex: 1,
     gap: Spacing.half,
+  },
+  badge: {
+    // minWidth rather than width so "99+" widens the pill instead of overflowing it; the matching
+    // borderRadius keeps it a circle at one digit and a capsule beyond that.
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    paddingHorizontal: Spacing.one,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeCount: {
+    // The shared line-height of `smallBold` is taller than the pill and would push the digits low.
+    lineHeight: 16,
   },
   spacer: {
     paddingVertical: Spacing.four,

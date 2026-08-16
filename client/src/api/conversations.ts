@@ -26,3 +26,17 @@ export function listMessages(conversationId: number): Promise<MessageResponse[]>
 export function sendMessage(conversationId: number, body: string): Promise<MessageResponse> {
   return api.post<MessageResponse>(`/conversations/${conversationId}/messages`, { body });
 }
+
+/**
+ * Clears the caller's unread badge up to `lastReadSeq`. Returns the updated conversation, so the
+ * chat list can be settled without re-listing.
+ *
+ * The pointer only moves forward server-side, so this is idempotent and safe to fire on every new
+ * message that arrives while the chat is open.
+ */
+export function markRead(
+  conversationId: number,
+  lastReadSeq: number,
+): Promise<ConversationResponse> {
+  return api.post<ConversationResponse>(`/conversations/${conversationId}/read`, { lastReadSeq });
+}

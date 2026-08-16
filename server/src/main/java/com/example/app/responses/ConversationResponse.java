@@ -17,6 +17,8 @@ public class ConversationResponse {
     private LocalDateTime lastMessageAt;
     /** How many messages the conversation holds -- also the seq of its newest message. */
     private Long lastSeq;
+    /** Messages from the other person that the viewer has not read yet. */
+    private Long unreadCount;
 
     public ConversationResponse(Conversation conversation, Long viewerId) {
         User other = conversation.getUserLow().getId().equals(viewerId)
@@ -27,5 +29,6 @@ public class ConversationResponse {
         this.otherUser = new UserResponse(other);
         this.lastMessageAt = conversation.getLastMessageAt();
         this.lastSeq = conversation.getLastSeq();
+        this.unreadCount = conversation.unreadCountFor(viewerId);
     }
 }

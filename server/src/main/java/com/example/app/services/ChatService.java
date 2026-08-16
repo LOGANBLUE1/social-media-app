@@ -107,6 +107,10 @@ public class ChatService {
 
         conversation.setLastSeq(conversation.getLastSeq() + 1);
         conversation.setLastMessageAt(now);
+        // You have read what you just wrote. Beyond being obviously true, this is the invariant the
+        // unread count depends on: it keeps your own messages from ever sitting above your pointer,
+        // so "everything above the pointer" and "everything unread from them" are the same set.
+        conversation.applyLastReadSeqFor(senderId, conversation.getLastSeq());
         conversationRepository.save(conversation);
 
         Message message = new Message();
@@ -116,6 +120,35 @@ public class ChatService {
         message.setBody(body.trim());
         message.setCreateDate(now);
         return new MessageResponse(messageRepository.save(message));
+    }
+
+    /**
+     * Moves the caller's read pointer up to the message they have actually seen, and returns the
+     * conversation so the caller gets the resulting unreadCount without a follow-up request.
+     *
+     * The pointer only ever moves forward, and never past the newest message that exists. That
+     * makes this idempotent and safe to fire on every poll: a duplicate or out-of-order request
+     * cannot rewind the position, and a client that reports a seq from a page it rendered before
+     * a new message landed marks only what it really showed.
+     *
+     * Takes the row lock so a send racing this cannot have its seq clamped away by a stale read
+     * of lastSeq.
+     *
+     * @param lastReadSeq the newest seq the caller has seen; null means "everything there is"
+     * @throws ForbiddenException if the caller is not one of the two participants
+     */
+    @Transactional
+    public ConversationResponse markRead(Long conversationId, Long viewerId, Long lastReadSeq) {
+        Conversation conversation = conversationRepository.findByIdForUpdate(conversationId)
+                .orElseThrow(() -> new NotFoundException("Conversation not found"));
+        requireParticipant(conversation, viewerId);
+
+        long requested = lastReadSeq == null ? conversation.getLastSeq() : lastReadSeq;
+        long capped = Math.min(requested, conversation.getLastSeq());
+        long target = Math.max(capped, conversation.lastReadSeqFor(viewerId));
+
+        conversation.applyLastReadSeqFor(viewerId, target);
+        return new ConversationResponse(conversationRepository.save(conversation), viewerId);
     }
 
     public Conversation getByIdOrThrow(Long conversationId) {

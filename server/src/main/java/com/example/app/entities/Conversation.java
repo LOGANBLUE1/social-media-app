@@ -44,5 +44,41 @@ public class Conversation {
     /** Denormalised so the chat list sorts without touching the message table. */
     private LocalDateTime lastMessageAt;
 
+    /**
+     * How far each participant has read, as a seq. Two columns rather than a participant table,
+     * for the same reason the pair itself is stored low/high: a 1:1 chat has exactly two sides.
+     *
+     * Kept in step with {@link #lastSeq} by ChatService, which advances the *sender's* pointer on
+     * every send. That invariant is what lets the unread count be plain subtraction -- see
+     * {@link #unreadCountFor}.
+     */
+    @Column(nullable = false)
+    private Long userLowLastReadSeq = 0L;
+
+    @Column(nullable = false)
+    private Long userHighLastReadSeq = 0L;
+
     private LocalDateTime createDate;
+
+    /** The given participant's read position. Assumes they are one -- callers check first. */
+    public Long lastReadSeqFor(Long userId) {
+        return userLow.getId().equals(userId) ? userLowLastReadSeq : userHighLastReadSeq;
+    }
+
+    public void applyLastReadSeqFor(Long userId, Long seq) {
+        if (userLow.getId().equals(userId)) {
+            userLowLastReadSeq = seq;
+        } else {
+            userHighLastReadSeq = seq;
+        }
+    }
+
+    /**
+     * Unread messages for one participant: everything written since they last read. No COUNT --
+     * seq is gap-free, and a sender's own pointer moves with their message, so nothing above the
+     * pointer can be the viewer's own.
+     */
+    public long unreadCountFor(Long userId) {
+        return Math.max(0L, lastSeq - lastReadSeqFor(userId));
+    }
 }

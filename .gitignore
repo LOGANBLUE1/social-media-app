@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Editors. Ignored wholesale rather than per-file because launch configs here hold real secrets
+# (JWT_SECRET, database passwords) -- see .vscode/launch.json.
+.idea/
+.vscode/
+*.iml
+
+# Local environment overrides. Never commit a filled-in one.
+.env
+.env.local

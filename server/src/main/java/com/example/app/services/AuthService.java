@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Owns everything credential-related: verifying passwords, encoding them before they are
@@ -91,12 +92,21 @@ public class AuthService {
         userService.save(user);
     }
 
+    /**
+     * Trades a refresh token for a fresh access token, and pushes the refresh token's own expiry
+     * back out -- so a user who keeps using the app is never signed out on a timer.
+     *
+     * The lookup is by token value alone. request.getUserId() is ignored: the row already knows
+     * whose it is, and taking the owner from the row rather than the request means a caller cannot
+     * name someone else. The field stays on the request for wire compatibility with the client.
+     */
+    @Transactional
     public AuthenticationResponse refresh(RefreshTokenRequest request) {
-        RefreshToken token = refreshTokenService.getByUser(request.getUserId());
-        if (token == null || !token.getToken().equals(request.getRefreshToken())
-                || refreshTokenService.isRefreshExpired(token)) {
+        RefreshToken token = refreshTokenService.getByToken(request.getRefreshToken());
+        if (token == null || refreshTokenService.isRefreshExpired(token)) {
             throw new UnauthorizedException("refresh token is not valid.");
         }
+        refreshTokenService.extend(token);
 
         AuthenticationResponse body = new AuthenticationResponse();
         body.setAccessToken(jwtTokenProvider.generateJwtTokenByUserId(token.getUser().getId()));

@@ -2,6 +2,7 @@ package com.example.app.controllers;
 
 import com.example.app.requests.CreateConversationRequest;
 import com.example.app.requests.CreateMessageRequest;
+import com.example.app.requests.MarkConversationReadRequest;
 import com.example.app.responses.ConversationResponse;
 import com.example.app.responses.MessageResponse;
 import com.example.app.security.JWTUserDetails;
@@ -51,5 +52,17 @@ public class ConversationController {
                                           @RequestBody CreateMessageRequest request,
                                           @AuthenticationPrincipal JWTUserDetails user) {
         return Response.success(chatService.sendMessage(id, user.getId(), request.getBody()));
+    }
+
+    /**
+     * Clears the caller's unread badge up to the message they have seen. Returns the conversation
+     * so the client can settle its own cache without re-listing. Idempotent, and the read pointer
+     * never moves backwards, so this is safe to send on every poll.
+     */
+    @PostMapping("/{id}/read")
+    public Response<ConversationResponse> markRead(@PathVariable Long id,
+                                                   @RequestBody MarkConversationReadRequest request,
+                                                   @AuthenticationPrincipal JWTUserDetails user) {
+        return Response.success(chatService.markRead(id, user.getId(), request.getLastReadSeq()));
     }
 }

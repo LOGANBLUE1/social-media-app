@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { conversations } from '@/api';
+import { conversations, type ConversationResponse } from '@/api';
 import { useAuth } from '@/auth/auth-context';
 
 export const chatKeys = {
@@ -41,6 +41,28 @@ export function useOpenConversation() {
   return useMutation({
     mutationFn: (userId: number) => conversations.open(userId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.conversations }),
+  });
+}
+
+/**
+ * Clears this chat's unread badge up to the newest message the screen has rendered.
+ *
+ * Fire-and-forget by design: a failed mark-read just means the badge lingers until the next one
+ * succeeds, which is not worth interrupting the reader with an error.
+ */
+export function useMarkRead(conversationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (lastReadSeq: number) => conversations.markRead(conversationId, lastReadSeq),
+    // Patch the row in place instead of invalidating -- the server hands back the updated
+    // conversation, so a refetch here would only race the list's own 15s poll for the same data.
+    onSuccess: (updated) =>
+      queryClient.setQueryData<ConversationResponse[]>(chatKeys.conversations, (current) =>
+        current?.map((conversation) =>
+          conversation.id === updated.id ? updated : conversation,
+        ),
+      ),
   });
 }
 

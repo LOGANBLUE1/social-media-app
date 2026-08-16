@@ -1,5 +1,5 @@
 import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -16,7 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/auth/auth-context';
-import { useMessages, useSendMessage } from '@/hooks/use-chat';
+import { useMarkRead, useMessages, useSendMessage } from '@/hooks/use-chat';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function ChatScreen() {
@@ -26,8 +26,19 @@ export default function ChatScreen() {
 
   const messages = useMessages(conversationId);
   const send = useSendMessage(conversationId);
+  const markRead = useMarkRead(conversationId);
 
   const [body, setBody] = useState('');
+
+  // Being on this screen is what counts as reading, so the pointer follows the newest message the
+  // list has rendered -- both the ones already here on open and the ones the 5s poll brings in.
+  // Keyed on the seq rather than the array so it fires once per genuinely new message.
+  const newestSeq = messages.data?.at(-1)?.seq ?? 0;
+  const { mutate: reportRead } = markRead;
+
+  useEffect(() => {
+    if (newestSeq > 0) reportRead(newestSeq);
+  }, [newestSeq, reportRead]);
 
   if (!hydrating && !session) return <Redirect href="/login" />;
 
