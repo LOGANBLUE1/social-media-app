@@ -63,8 +63,8 @@ exit   # log back in for the group to take effect
 ## 4. Deploy
 
 ```bash
-git clone https://github.com/LOGANBLUE1/social-media-app-server.git
-cd social-media-app-server/server
+git clone https://github.com/LOGANBLUE1/social-media-app.git
+cd social-media-app/server
 
 cp .env.example .env
 nano .env
@@ -151,12 +151,12 @@ Either add them comma-separated or test previews against a local server.
 instance destroys it.**
 
 ```bash
-chmod +x ~/social-media-app-server/server/scripts/backup.sh
+chmod +x ~/social-media-app/server/scripts/backup.sh
 crontab -e
 ```
 
 ```
-0 3 * * * /home/ubuntu/social-media-app-server/server/scripts/backup.sh >> /home/ubuntu/backup.log 2>&1
+0 3 * * * /home/ubuntu/social-media-app/server/scripts/backup.sh >> /home/ubuntu/backup.log 2>&1
 ```
 
 Set `S3_BUCKET` in the script's environment to copy dumps off the box. Until you do, the backups
@@ -173,7 +173,7 @@ gzip -dc ~/backups/logandb-YYYYMMDD-HHMMSS.sql.gz | \
 ## Updating
 
 ```bash
-cd ~/social-media-app-server && git pull
+cd ~/social-media-app && git pull
 cd server && docker compose up -d --build
 ```
 
