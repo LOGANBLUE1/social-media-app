@@ -12,7 +12,6 @@ import com.example.app.requests.UpdatePostRequest;
 import com.example.app.responses.PostResponse;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +73,6 @@ public class PostService {
         post.setDescription(newPostRequest.getDescription());
         post.setTitle(newPostRequest.getTitle());
         post.setUser(user);
-        post.setCreateDate(LocalDateTime.now());
         // A new post has no likes or comments yet, and its author has not liked it.
         return new PostResponse(postRepository.save(post), 0L, 0L, false);
     }

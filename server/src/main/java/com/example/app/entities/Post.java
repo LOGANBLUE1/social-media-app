@@ -3,6 +3,7 @@ package com.example.app.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -28,5 +29,7 @@ public class Post {
     @Column(columnDefinition = "text")
     private String description;
 
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createDate;
 }

@@ -16,8 +16,15 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/auth/auth-context';
-import { useMarkRead, useMessages, useSendMessage } from '@/hooks/use-chat';
+import {
+  useConversations,
+  useMarkRead,
+  useMessages,
+  useSendMessage,
+} from '@/hooks/use-chat';
 import { useTheme } from '@/hooks/use-theme';
+import { conversationTitle } from '@/utils/conversation';
+import { formatTimeOfDay } from '@/utils/time';
 
 export default function ChatScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
@@ -27,6 +34,13 @@ export default function ChatScreen() {
   const messages = useMessages(conversationId);
   const send = useSendMessage(conversationId);
   const markRead = useMarkRead(conversationId);
+
+  // Read from the chat list's cache rather than passed through route params. Params are only
+  // present when you arrived by tapping a row -- a deep link or a web refresh has none, and this
+  // still resolves because the list query is shared and already polling.
+  const conversations = useConversations();
+  const conversation = conversations.data?.find((item) => item.id === conversationId);
+  const isGroup = conversation?.type === 'GROUP';
 
   const [body, setBody] = useState('');
 
@@ -57,7 +71,11 @@ export default function ChatScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: name || 'Chat' }} />
+      {/* The param wins on first paint (it is right there, no fetch); the conversation takes over
+          once loaded, which is what makes a deep-linked group show its name rather than "Chat". */}
+      <Stack.Screen
+        options={{ title: (conversation && conversationTitle(conversation)) || name || 'Chat' }}
+      />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -86,7 +104,9 @@ export default function ChatScreen() {
               </ThemedText>
             )
           }
-          renderItem={({ item }) => <Bubble message={item} mine={item.senderId === user?.id} />}
+          renderItem={({ item }) => (
+            <Bubble message={item} mine={item.senderId === user?.id} showSender={isGroup} />
+          )}
         />
 
         <View style={styles.composer}>
@@ -110,7 +130,15 @@ export default function ChatScreen() {
   );
 }
 
-function Bubble({ message, mine }: { message: MessageResponse; mine: boolean }) {
+function Bubble({
+  message,
+  mine,
+  showSender,
+}: {
+  message: MessageResponse;
+  mine: boolean;
+  showSender: boolean;
+}) {
   const theme = useTheme();
 
   return (
@@ -120,25 +148,24 @@ function Bubble({ message, mine }: { message: MessageResponse; mine: boolean }) 
           styles.bubble,
           { backgroundColor: mine ? theme.tint : theme.backgroundElement },
         ]}>
+        {/* Groups only, and never on your own messages -- in a 1:1 the two sides already say who
+            is speaking, and labelling your own bubble is noise in either case. */}
+        {showSender && !mine && (
+          <ThemedText type="smallBold" style={[styles.sender, { color: theme.tint }]}>
+            {message.senderUsername}
+          </ThemedText>
+        )}
         <ThemedText type="small" style={{ color: mine ? theme.onTint : theme.text }}>
           {message.body}
         </ThemedText>
         <ThemedText
           type="small"
           style={[styles.time, { color: mine ? theme.onTint : theme.textSecondary }]}>
-          {formatTime(message.createdAt)}
+          {formatTimeOfDay(message.createdAt)}
         </ThemedText>
       </View>
     </View>
   );
-}
-
-/** No timezone offset on the wire, so Date parses it as local time -- which is what we want. */
-function formatTime(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? ''
-    : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 const styles = StyleSheet.create({
@@ -167,6 +194,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     borderRadius: Spacing.three,
+  },
+  sender: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   time: {
     fontSize: 11,

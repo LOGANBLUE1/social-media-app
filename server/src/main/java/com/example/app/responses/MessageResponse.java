@@ -6,8 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * Only the sender's id, not the whole user: a 1:1 chat has two participants and the client already
- * knows both from the conversation, so repeating a username on every message is wasted payload.
+ * One message. Carries the sender's name as well as their id: in a group, "who said this" cannot
+ * be inferred from position or from the two-people-in-the-room assumption a direct chat allows.
+ * Direct chats ignore it and keep rendering by ownership.
  */
 @Data
 public class MessageResponse {
@@ -15,14 +16,18 @@ public class MessageResponse {
     /** Position in the conversation. Sort on this, not createdAt. */
     private Long seq;
     private Long senderId;
+    /** Rendered above the bubble in group chats. */
+    private String senderUsername;
     private String body;
     private LocalDateTime createdAt;
 
     public MessageResponse(Message message) {
         this.id = message.getId();
         this.seq = message.getSeq();
-        // Reading the id off a lazy proxy does not trigger a load, so this stays one query.
         this.senderId = message.getSender().getId();
+        // Unlike the id, this does initialise the lazy sender proxy. The alternative -- resolving
+        // names client-side from the participant list -- breaks for anyone who has left the room.
+        this.senderUsername = message.getSender().getUsername();
         this.body = message.getBody();
         this.createdAt = message.getCreateDate();
     }

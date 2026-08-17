@@ -5,6 +5,7 @@ import type { FriendRequestResponse, UserResponse } from '@/api';
 import { AppTabs } from '@/components/app-tabs';
 import { Avatar } from '@/components/avatar';
 import { Button } from '@/components/button';
+import { NEW_USER_HOURS, NewBadge } from '@/components/new-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -143,7 +144,10 @@ function UserRow({
     <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
       <Avatar username={user.username} image={user.image} size={40} />
       <View style={styles.details}>
-        <ThemedText type="smallBold">{user.username}</ThemedText>
+        <View style={styles.nameRow}>
+          <ThemedText type="smallBold">{user.username}</ThemedText>
+          <NewBadge createdAt={user.createdAt} withinHours={NEW_USER_HOURS} />
+        </View>
         <ThemedText type="small" themeColor="textSecondary">
           User #{user.id}
         </ThemedText>
@@ -227,6 +231,11 @@ const styles = StyleSheet.create({
   details: {
     flex: 1,
     gap: Spacing.half,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   actions: {
     flexDirection: 'row',

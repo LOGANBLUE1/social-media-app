@@ -34,6 +34,20 @@ export function useMessages(conversationId: number) {
   });
 }
 
+/**
+ * Creates a group chat. Every member must be a friend of the caller -- the server 403s otherwise,
+ * which the create screen surfaces rather than trying to pre-empt.
+ */
+export function useCreateGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ name, memberIds }: { name: string; memberIds: number[] }) =>
+      conversations.createGroup(name, memberIds),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.conversations }),
+  });
+}
+
 /** Opens (or reuses) the chat with a friend. 403s when the two are not friends. */
 export function useOpenConversation() {
   const queryClient = useQueryClient();

@@ -10,13 +10,8 @@ import com.example.app.requests.CreateCommentRequest;
 import com.example.app.requests.UpdateCommentRequest;
 import com.example.app.responses.CommentResponse;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CommentService {
@@ -31,23 +26,31 @@ public class CommentService {
         this.userService = userService;
         this.postService = postService;
     }
-    public List<CommentResponse> getAllPostComments(Long postId){
-        List<Comment> comments = commentRepository.findByPostId(postId);
-        return comments.stream().map(CommentResponse::new).collect(Collectors.toList());
+
+    /** Every comment on one post -- what the post detail view renders. */
+    public List<CommentResponse> getAllPostComments(Long postId) {
+        return toResponses(commentRepository.findByPostId(postId));
     }
 
-    public List<CommentResponse> getAllComments(Optional<Long> userId, Optional<Long> postId) {
-        List<Comment> comments;
-        if(userId.isPresent() && postId.isPresent()) {
-            comments = commentRepository.findByUserIdAndPostId(userId.get(), postId.get());  //get diyince içerisindeki değeri alırız.
-        } else if(userId.isPresent()){
-            comments =  commentRepository.findByUserId(userId.get());
-        } else if (postId.isPresent()){
-            comments = commentRepository.findByPostId(postId.get());
-        } else {
-            comments = null;
+    /**
+     * Comments filtered by author, by post, or by both. A null id means "no constraint on this
+     * field", so the three combinations map onto the three derived queries.
+     *
+     * Passing neither returns nothing rather than the whole table. An unfiltered dump grows without
+     * bound and no caller has ever wanted one -- making it the default for a missing parameter would
+     * turn a forgotten query string into a full table scan.
+     */
+    public List<CommentResponse> getAllComments(Long userId, Long postId) {
+        if (userId != null && postId != null) {
+            return toResponses(commentRepository.findByUserIdAndPostId(userId, postId));
         }
-        return comments.stream().map(CommentResponse::new).collect(Collectors.toList());
+        else if (userId != null) {
+            return toResponses(commentRepository.findByUserId(userId));
+        }
+        else if (postId != null) {
+            return toResponses(commentRepository.findByPostId(postId));
+        }
+        return List.of();
     }
 
     public Comment getCommentByIdOrThrow(Long id) {
@@ -67,14 +70,13 @@ public class CommentService {
         comment.setPost(post);
         comment.setUser(user);
         comment.setText(request.getText());
-        comment.setCreateDate(LocalDateTime.now());
         return commentRepository.save(comment);
     }
 
     /**
      * @throws NotFoundException if id has no row. Raised by getCommentByIdOrThrow.
      */
-    public Comment updateCommentById(Long id, @RequestBody UpdateCommentRequest request) {
+    public Comment updateCommentById(Long id, UpdateCommentRequest request) {
         Comment comment = this.getCommentByIdOrThrow(id);
         comment.setText(request.getText());
         return commentRepository.save(comment);
@@ -82,6 +84,10 @@ public class CommentService {
 
     public void deleteCommentById(Long id) {
         commentRepository.deleteById(id);
+    }
+
+    private static List<CommentResponse> toResponses(List<Comment> comments) {
+        return comments.stream().map(CommentResponse::new).toList();
     }
 }
 

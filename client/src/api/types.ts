@@ -19,6 +19,14 @@ export interface UserResponse {
   id: number;
   username: string;
   image: string | null;
+  /**
+   * When the account was created. Null for accounts that predate the column (server migration V5),
+   * which the "NEW" badge reads as "not new" rather than guessing.
+   *
+   * Same offset-less shape as PostResponse.createdAt -- always parse via `@/utils/time`, never
+   * `new Date()` directly, or it is read as local time and lands hours out.
+   */
+  createdAt: string | null;
 }
 
 export interface AuthenticationResponse {
@@ -86,10 +94,23 @@ export interface FriendRequestResponse {
   respondedAt: string | null;
 }
 
-/** A 1:1 chat seen from the caller's side -- the server resolves which participant is "the other". */
+/** Direct chats and groups share one table and one DTO server-side -- see migration V6. */
+export type ConversationType = 'DIRECT' | 'GROUP';
+
+/**
+ * A chat seen from the caller's side. `type` says which of the next two fields is meaningful: a
+ * direct chat fills `otherUser` and leaves `name` null, a group does the reverse. Use
+ * `conversationTitle` rather than branching on it at every call site.
+ */
 export interface ConversationResponse {
   id: number;
-  otherUser: UserResponse;
+  type: ConversationType;
+  /** Group title. Null for a direct chat, which is named after the other person. */
+  name: string | null;
+  /** The other person in a direct chat. Null for a group, which has no single "other". */
+  otherUser: UserResponse | null;
+  /** Everyone in the room, the caller included. */
+  participants: UserResponse[];
   /** Seeded to the creation time, so it is never null even before the first message. */
   lastMessageAt: string;
   /** How many messages the conversation holds -- also the seq of its newest message. */
@@ -110,6 +131,8 @@ export interface MessageResponse {
   /** Position in the conversation. Sort on this, not createdAt. */
   seq: number;
   senderId: number;
+  /** Shown above the bubble in groups, where ownership alone does not identify the speaker. */
+  senderUsername: string;
   body: string;
   createdAt: string;
 }
@@ -171,6 +194,15 @@ export interface CreateLikeRequest {
 /** The other participant. The caller is taken from the principal. */
 export interface CreateConversationRequest {
   userId: number;
+}
+
+/**
+ * A new group. The creator is taken from the principal and joins automatically, so this carries
+ * only the friends they picked. Every id must be a friend of the creator or the server 403s.
+ */
+export interface CreateGroupRequest {
+  name: string;
+  memberIds: number[];
 }
 
 export interface CreateMessageRequest {

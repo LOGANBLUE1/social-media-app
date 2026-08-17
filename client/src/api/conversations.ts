@@ -14,6 +14,16 @@ export function open(userId: number): Promise<ConversationResponse> {
   return api.post<ConversationResponse>('/conversations', { userId });
 }
 
+/**
+ * Creates a group chat containing the caller and the friends they picked.
+ *
+ * Not idempotent, unlike `open` -- two calls with the same name and members make two groups, which
+ * is the intended behaviour.
+ */
+export function createGroup(name: string, memberIds: number[]): Promise<ConversationResponse> {
+  return api.post<ConversationResponse>('/conversations/groups', { name, memberIds });
+}
+
 /** The whole conversation, oldest first. */
 export function listMessages(conversationId: number): Promise<MessageResponse[]> {
   return api.get<MessageResponse[]>(`/conversations/${conversationId}/messages`);

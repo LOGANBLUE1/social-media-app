@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import type { PostResponse } from '@/api';
+import { NEW_POST_HOURS, NewBadge } from '@/components/new-badge';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { formatDateTime } from '@/utils/time';
 
 type Props = {
   post: PostResponse;
@@ -27,7 +29,12 @@ export function PostRow({ post, onPress, onEdit, onDelete, deleting }: Props) {
     // react-native-web nesting them inside one renders an invalid <button> in a <button>.
     <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
       <Pressable onPress={onPress} accessibilityRole="button" style={styles.body}>
-        <ThemedText type="smallBold">{post.title}</ThemedText>
+        <View style={styles.titleRow}>
+          <ThemedText type="smallBold" style={styles.title}>
+            {post.title}
+          </ThemedText>
+          <NewBadge createdAt={post.createdAt} withinHours={NEW_POST_HOURS} />
+        </View>
         <ThemedText type="small" themeColor="textSecondary">
           {post.author.username}
         </ThemedText>
@@ -38,7 +45,7 @@ export function PostRow({ post, onPress, onEdit, onDelete, deleting }: Props) {
         )}
         <ThemedText type="small" themeColor="textSecondary">
           {post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'} · {post.commentCount}{' '}
-          {post.commentCount === 1 ? 'comment' : 'comments'} · {formatCreatedAt(post.createdAt)}
+          {post.commentCount === 1 ? 'comment' : 'comments'} · {formatDateTime(post.createdAt)}
         </ThemedText>
       </Pressable>
 
@@ -103,12 +110,6 @@ export function PostRow({ post, onPress, onEdit, onDelete, deleting }: Props) {
   );
 }
 
-/** `createdAt` has no timezone offset, so Date parses it as local time -- which is what we want. */
-function formatCreatedAt(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
-}
-
 const styles = StyleSheet.create({
   card: {
     gap: Spacing.two,
@@ -117,6 +118,15 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: Spacing.two,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  title: {
+    // Shrinks so a long title truncates rather than pushing the badge off the card.
+    flexShrink: 1,
   },
   footer: {
     flexDirection: 'row',

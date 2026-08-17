@@ -3,6 +3,7 @@ package com.example.app.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -30,5 +31,7 @@ public class Comment {
     @Column(columnDefinition = "text")
     private String text;
 
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createDate;
 }

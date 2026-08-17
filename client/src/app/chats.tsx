@@ -11,9 +11,11 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/auth/auth-context';
 import { useConversations } from '@/hooks/use-chat';
 import { useTheme } from '@/hooks/use-theme';
+import { conversationTitle, groupMemberSummary } from '@/utils/conversation';
+import { formatDateTime } from '@/utils/time';
 
 export default function ChatsScreen() {
-  const { session, hydrating } = useAuth();
+  const { session, user, hydrating } = useAuth();
   const router = useRouter();
   const query = useConversations();
 
@@ -27,7 +29,16 @@ export default function ChatsScreen() {
         contentContainerStyle={styles.list}
         refreshing={query.isRefetching}
         onRefresh={query.refetch}
-        ListHeaderComponent={<AppTabs active="chats" />}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <AppTabs active="chats" />
+            <Button
+              title="New group"
+              variant="secondary"
+              onPress={() => router.push('/new-group')}
+            />
+          </View>
+        }
         ListEmptyComponent={
           query.isLoading ? (
             <ActivityIndicator style={styles.spacer} />
@@ -47,10 +58,14 @@ export default function ChatsScreen() {
         renderItem={({ item }) => (
           <ConversationRow
             conversation={item}
+            viewerId={user?.id}
             onPress={() =>
               router.push({
                 pathname: '/chat/[id]',
-                params: { id: String(item.id), name: item.otherUser.username },
+                // The title is passed through so the header is right on the first frame; the chat
+                // screen re-derives it from the conversation itself for deep links, where there
+                // are no params to inherit.
+                params: { id: String(item.id), name: conversationTitle(item) },
               })
             }
           />
@@ -62,13 +77,17 @@ export default function ChatsScreen() {
 
 function ConversationRow({
   conversation,
+  viewerId,
   onPress,
 }: {
   conversation: ConversationResponse;
+  viewerId: number | undefined;
   onPress: () => void;
 }) {
   const theme = useTheme();
   const unread = conversation.unreadCount;
+  const isGroup = conversation.type === 'GROUP';
+  const title = conversationTitle(conversation);
 
   return (
     <Pressable
@@ -78,17 +97,34 @@ function ConversationRow({
       // number after it.
       accessibilityLabel={
         unread > 0
-          ? `${conversation.otherUser.username}, ${unread} unread ${unread === 1 ? 'message' : 'messages'}`
-          : conversation.otherUser.username
+          ? `${title}, ${unread} unread ${unread === 1 ? 'message' : 'messages'}`
+          : title
       }
       style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
+      {/* A group has no single face, so the fallback initial comes from its name. */}
       <Avatar
-        username={conversation.otherUser.username}
-        image={conversation.otherUser.image}
+        username={title}
+        image={isGroup ? null : conversation.otherUser?.image}
         size={40}
       />
       <View style={styles.details}>
-        <ThemedText type="smallBold">{conversation.otherUser.username}</ThemedText>
+        <View style={styles.titleRow}>
+          <ThemedText type="smallBold" numberOfLines={1} style={styles.title}>
+            {title}
+          </ThemedText>
+          {isGroup && (
+            <View style={[styles.groupTag, { backgroundColor: theme.backgroundSelected }]}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.groupTagText}>
+                {conversation.participants.length}
+              </ThemedText>
+            </View>
+          )}
+        </View>
+        {isGroup && (
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+            {groupMemberSummary(conversation, viewerId)}
+          </ThemedText>
+        )}
         <ThemedText
           type={unread > 0 ? 'smallBold' : 'small'}
           themeColor={unread > 0 ? 'text' : 'textSecondary'}>
@@ -97,7 +133,7 @@ function ConversationRow({
               message was ever sent at. */}
           {conversation.lastSeq === 0
             ? 'No messages yet'
-            : formatTimestamp(conversation.lastMessageAt)}
+            : formatDateTime(conversation.lastMessageAt)}
         </ThemedText>
       </View>
       {unread > 0 && (
@@ -114,12 +150,6 @@ function ConversationRow({
       )}
     </Pressable>
   );
-}
-
-/** No timezone offset on the wire, so Date parses it as local time -- which is what we want. */
-function formatTimestamp(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
 }
 
 const styles = StyleSheet.create({
@@ -140,9 +170,30 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.two,
   },
+  header: {
+    gap: Spacing.three,
+  },
   details: {
     flex: 1,
     gap: Spacing.half,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  title: {
+    flexShrink: 1,
+  },
+  groupTag: {
+    minWidth: 20,
+    paddingHorizontal: Spacing.one,
+    borderRadius: Spacing.one,
+    alignItems: 'center',
+  },
+  groupTagText: {
+    fontSize: 11,
+    lineHeight: 16,
   },
   badge: {
     // minWidth rather than width so "99+" widens the pill instead of overflowing it; the matching

@@ -1,6 +1,7 @@
 package com.example.app.controllers;
 
 import com.example.app.requests.CreateConversationRequest;
+import com.example.app.requests.CreateGroupRequest;
 import com.example.app.requests.CreateMessageRequest;
 import com.example.app.requests.MarkConversationReadRequest;
 import com.example.app.responses.ConversationResponse;
@@ -37,6 +38,19 @@ public class ConversationController {
     public Response<ConversationResponse> open(@RequestBody CreateConversationRequest request,
                                                @AuthenticationPrincipal JWTUserDetails user) {
         return Response.success(chatService.getOrCreate(user.getId(), request.getUserId()));
+    }
+
+    /**
+     * Creates a group chat from the caller plus the friends they picked. 201 rather than 200
+     * because, unlike opening a direct chat, this always creates a new room -- asking twice with
+     * the same name and members gives you two groups, which is what the user asked for.
+     */
+    @PostMapping("/groups")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Response<ConversationResponse> createGroup(@RequestBody CreateGroupRequest request,
+                                                      @AuthenticationPrincipal JWTUserDetails user) {
+        return Response.success(
+                chatService.createGroup(user.getId(), request.getName(), request.getMemberIds()));
     }
 
     /** The whole conversation, oldest first. */

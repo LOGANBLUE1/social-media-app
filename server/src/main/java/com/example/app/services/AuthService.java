@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 /**
  * Owns everything credential-related: verifying passwords, encoding them before they are
  * stored, and issuing access/refresh tokens. UserService handles profile fields only and

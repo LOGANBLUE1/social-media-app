@@ -92,3 +92,8 @@ server, not inferred:
 - Editing and deleting posts/comments — the API modules (`posts.update`, `comments.remove`, …)
   are written and typed, but no screen calls them.
 - Profile screen, other users' posts, avatar upload.
+
+
+
+npx eas-cli@latest init --id d2fff0a9-5663-42e9-a556-38fc3fbd6e16
+npx eas-cli@latest build --profile production

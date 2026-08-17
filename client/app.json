@@ -11,14 +11,14 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.adityapareek.socialmediaapp",
       "adaptiveIcon": {
         "backgroundColor": "#DCD0F8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "usesCleartextTraffic": true
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "single",
@@ -39,6 +39,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d2fff0a9-5663-42e9-a556-38fc3fbd6e16"
+      }
+    },
+    "owner": "loganblues-team"
   }
 }

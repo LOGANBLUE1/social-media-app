@@ -1,8 +1,10 @@
 package com.example.app.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity @Data
 @Table(name = "users")
@@ -16,4 +18,8 @@ public class User {
     private String username;
     private String password;
     private String image;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createDate;
 }
